@@ -75,63 +75,67 @@
     <script>
         const audio = document.getElementById('somAlerta');
 
-        // Monitora pedidos com status 'pendente'
+        // 1. VER CORRIDAS PENDENTES (Toca som)
         db.collection("corridas").where("status", "==", "pendente")
         .onSnapshot((snapshot) => {
             const container = document.getElementById('lista-corridas');
-            container.innerHTML = ""; // Limpa a tela
-
+            
+            // Só toca som se tiver corrida nova e o status for pendente
             if (!snapshot.empty) {
-                // Tenta tocar o som (o navegador pode bloquear se não houver interação antes)
-                audio.play().catch(e => console.log("Toque na tela para ativar o som."));
+                audio.play().catch(() => {}); 
+                container.innerHTML = ""; // Limpa para redesenhar
+            } else {
+                container.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>Nenhuma chamada pendente...</p>";
             }
 
             snapshot.forEach((doc) => {
                 const dados = doc.data();
                 
-                // Cria link do Google Maps se tiver GPS
-                let linkMapa = "#";
-                let botaoMapaHtml = "";
-                
-                if(dados.origem && dados.origem.lat) {
-                    linkMapa = `https://www.google.com/maps/search/?api=1&query=${dados.origem.lat},${dados.origem.lng}`;
-                    botaoMapaHtml = `<a href="${linkMapa}" target="_blank"><button class="btn-mapa">🗺️ Ver Local</button></a>`;
+                // Botão do Mapa
+                let btnMapa = "";
+                if(dados.origem) {
+                     // Link direto para GPS do Google Maps
+                     const link = `https://www.google.com/maps/dir/?api=1&destination=${dados.origem.lat},${dados.origem.lng}`;
+                     btnMapa = `<a href="${link}" target="_blank" style="text-decoration:none;"><button class="btn-mapa" style="background:#3498db; color:white; padding:10px; border:none; border-radius:5px; margin-right:5px;">🗺️ Ver Rota</button></a>`;
                 }
 
                 container.innerHTML += `
                     <div class="card-corrida">
-                        <span class="info-label">Destino Solicitado:</span>
-                        <span class="info-valor">📍 ${dados.destino}</span>
-                        
-                        <span class="info-label">Valor a Receber:</span>
-                        <span class="info-valor destaque-valor">💵 ${dados.valor}</span>
-                        
-                        <div class="btn-group">
-                            ${botaoMapaHtml}
-                            <button class="btn-aceitar" onclick="aceitarPedido('${doc.id}')">
-                                ACEITAR CORRIDA
-                            </button>
+                        <h3>📍 ${dados.destino}</h3>
+                        <p>Valor: <b style="color:#2ecc71">${dados.valor}</b></p>
+                        <div style="display:flex; margin-top:10px;">
+                            ${btnMapa}
+                            <button onclick="aceitarPedido('${doc.id}')" class="btn-aceitar" style="flex:1; background:#f1c40f; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">ACEITAR</button>
                         </div>
                     </div>
                 `;
             });
         });
 
+        // 2. VER CORRIDAS QUE EU JÁ ACEITEI (Para poder finalizar)
+        // Isso cria uma lista separada embaixo para você controlar quem está levando
+        db.collection("corridas").where("status", "==", "aceito")
+        .onSnapshot((snapshot) => {
+            // Se quiser, crie uma <div id="minhas-corridas"> no HTML para mostrar isso
+            snapshot.forEach((doc) => {
+                // Aqui você poderia mostrar um botão "FINALIZAR VIAGEM"
+                // Para simplificar agora, focamos apenas em aceitar.
+            });
+        });
+
+        // FUNÇÃO DE ACEITAR
         function aceitarPedido(id) {
-            if(confirm("Aceitar essa corrida?")) {
+            if(confirm("Pegar essa corrida?")) {
                 db.collection("corridas").doc(id).update({
                     status: "aceito",
-                    motorista: "Motorista 01" // Depois podemos colocar seu nome real
+                    motorista: "Seu Nome"
                 }).then(() => {
-                    alert("Corrida Aceita! Vá buscar o passageiro.");
+                    alert("Corrida Aceita! O passageiro foi avisado.");
+                    // A corrida vai sumir da lista de 'pendentes' automaticamente
                 });
             }
         }
-
-        // Dica para ativar o som no celular
-        document.body.addEventListener('click', () => {
-            audio.load(); // Destrava o áudio do navegador
-        });
     </script>
+
 </body>
 </html>
