@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Motorista - Conchas</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* MODO ESCURO (Ideal para trabalhar à noite/economia de bateria) */
+        body { font-family: 'Inter', sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px; }
+        .status-online { color: #2ecc71; font-weight: bold; font-size: 0.9em; letter-spacing: 1px; }
+
+        /* CARD DA CORRIDA */
+        .card-corrida {
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #f1c40f; /* Amarelo Táxi */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: pulse 2s infinite;
+        }
+
+        /* Animação para chamar atenção */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
+        }
+
+        .info-label { color: #888; font-size: 0.8em; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .info-valor { font-size: 1.2em; margin-bottom: 15px; display: block; font-weight: bold; }
+        .destaque-valor { color: #2ecc71; font-size: 1.5em; }
+
+        /* BOTÕES */
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        
+        .btn-mapa {
+            flex: 1; background: #3498db; color: white; border: none;
+            padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer;
+        }
+        
+        .btn-aceitar {
+            flex: 2; background: #f1c40f; color: #000; border: none;
+            padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer;
+        }
+
+        /* ÁREA VAZIA */
+        #lista-corridas:empty::after {
+            content: "💤 Aguardando chamadas em Conchas...";
+            display: block; text-align: center; color: #555; margin-top: 100px; font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Moto Conchas 🏍️</h1>
+        <div class="status-online">● ONLINE - AGUARDANDO PEDIDOS</div>
+    </div>
+
+    <div id="lista-corridas">
+        </div>
+
+    <audio id="somAlerta" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const audio = document.getElementById('somAlerta');
+
+        // Monitora pedidos com status 'pendente'
+        db.collection("corridas").where("status", "==", "pendente")
+        .onSnapshot((snapshot) => {
+            const container = document.getElementById('lista-corridas');
+            container.innerHTML = ""; // Limpa a tela
+
+            if (!snapshot.empty) {
+                // Tenta tocar o som (o navegador pode bloquear se não houver interação antes)
+                audio.play().catch(e => console.log("Toque na tela para ativar o som."));
+            }
+
+            snapshot.forEach((doc) => {
+                const dados = doc.data();
+                
+                // Cria link do Google Maps se tiver GPS
+                let linkMapa = "#";
+                let botaoMapaHtml = "";
+                
+                if(dados.origem && dados.origem.lat) {
+                    linkMapa = `https://www.google.com/maps/search/?api=1&query=${dados.origem.lat},${dados.origem.lng}`;
+                    botaoMapaHtml = `<a href="${linkMapa}" target="_blank"><button class="btn-mapa">🗺️ Ver Local</button></a>`;
+                }
+
+                container.innerHTML += `
+                    <div class="card-corrida">
+                        <span class="info-label">Destino Solicitado:</span>
+                        <span class="info-valor">📍 ${dados.destino}</span>
+                        
+                        <span class="info-label">Valor a Receber:</span>
+                        <span class="info-valor destaque-valor">💵 ${dados.valor}</span>
+                        
+                        <div class="btn-group">
+                            ${botaoMapaHtml}
+                            <button class="btn-aceitar" onclick="aceitarPedido('${doc.id}')">
+                                ACEITAR CORRIDA
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        function aceitarPedido(id) {
+            if(confirm("Aceitar essa corrida?")) {
+                db.collection("corridas").doc(id).update({
+                    status: "aceito",
+                    motorista: "Motorista 01" // Depois podemos colocar seu nome real
+                }).then(() => {
+                    alert("Corrida Aceita! Vá buscar o passageiro.");
+                });
+            }
+        }
+
+        // Dica para ativar o som no celular
+        document.body.addEventListener('click', () => {
+            audio.load(); // Destrava o áudio do navegador
+        });
+    </script>
+</body>
+</html>
