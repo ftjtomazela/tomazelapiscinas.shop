@@ -3,139 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Motorista - Conchas</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    
+    <title>Motorista - Conchas</title>
     <style>
-        /* MODO ESCURO (Ideal para trabalhar à noite/economia de bateria) */
-        body { font-family: 'Inter', sans-serif; background: #1a1a1a; color: white; margin: 0; padding: 20px; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
         
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 20px; }
-        .status-online { color: #2ecc71; font-weight: bold; font-size: 0.9em; letter-spacing: 1px; }
-
-        /* CARD DA CORRIDA */
-        .card-corrida {
-            background: #2d2d2d;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 5px solid #f1c40f; /* Amarelo Táxi */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            animation: pulse 2s infinite;
+        /* Estilo do Cartão */
+        .card { 
+            background: #333; 
+            border-left: 5px solid #f1c40f; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
-        /* Animação para chamar atenção */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(241, 196, 15, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
-        }
+        h3 { margin: 0 0 10px 0; color: #fff; }
+        p { font-size: 1.2em; margin: 5px 0; }
 
-        .info-label { color: #888; font-size: 0.8em; text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .info-valor { font-size: 1.2em; margin-bottom: 15px; display: block; font-weight: bold; }
-        .destaque-valor { color: #2ecc71; font-size: 1.5em; }
-
-        /* BOTÕES */
-        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
-        
-        .btn-mapa {
-            flex: 1; background: #3498db; color: white; border: none;
-            padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer;
+        /* Botões */
+        .btn { 
+            width: 100%; padding: 15px; font-weight: bold; font-size: 16px; 
+            margin-top: 10px; cursor: pointer; border-radius: 8px; border: none;
         }
-        
-        .btn-aceitar {
-            flex: 2; background: #f1c40f; color: #000; border: none;
-            padding: 15px; border-radius: 10px; font-weight: bold; font-size: 1.1em; cursor: pointer;
-        }
+        .btn-aceitar { background: #f1c40f; color: black; }
+        .btn-mapa { background: #3498db; color: white; text-decoration: none; display: inline-block; text-align: center; }
 
-        /* ÁREA VAZIA */
-        #lista-corridas:empty::after {
-            content: "💤 Aguardando chamadas em Conchas...";
-            display: block; text-align: center; color: #555; margin-top: 100px; font-size: 1.2em;
+        /* Mensagem de vazio */
+        #lista:empty::after {
+            content: "Procurando corridas em Conchas...";
+            color: #888; display: block; text-align: center; margin-top: 50px;
         }
     </style>
 </head>
 <body>
+    <h2 style="text-align:center; color:#f1c40f;">Painel Motorista 🏍️</h2>
+    
+    <div id="lista"></div>
 
-    <div class="header">
-        <h1>Moto Conchas 🏍️</h1>
-        <div class="status-online">● ONLINE - AGUARDANDO PEDIDOS</div>
-    </div>
-
-    <div id="lista-corridas">
-        </div>
-
-    <audio id="somAlerta" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
+    <audio id="som" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
+    
+<script>
+        const audio = document.getElementById('som');
+        let watchID = null; // Para controlar o GPS
 
-    <script>
-        const audio = document.getElementById('somAlerta');
+        document.body.onclick = () => audio.play().catch(() => {});
 
-        // 1. VER CORRIDAS PENDENTES (Toca som)
+        // LISTAR PEDIDOS
         db.collection("corridas").where("status", "==", "pendente")
-        .onSnapshot((snapshot) => {
-            const container = document.getElementById('lista-corridas');
-            
-            // Só toca som se tiver corrida nova e o status for pendente
-            if (!snapshot.empty) {
-                audio.play().catch(() => {}); 
-                container.innerHTML = ""; // Limpa para redesenhar
-            } else {
-                container.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>Nenhuma chamada pendente...</p>";
-            }
+        .onSnapshot(snapshot => {
+            const div = document.getElementById('lista');
+            div.innerHTML = "";
+            if(!snapshot.empty) audio.play().catch(() => {});
 
-            snapshot.forEach((doc) => {
-                const dados = doc.data();
-                
-                // Botão do Mapa
-                let btnMapa = "";
-                if(dados.origem) {
-                     // Link direto para GPS do Google Maps
-                     const link = `https://www.google.com/maps/dir/?api=1&destination=${dados.origem.lat},${dados.origem.lng}`;
-                     btnMapa = `<a href="${link}" target="_blank" style="text-decoration:none;"><button class="btn-mapa" style="background:#3498db; color:white; padding:10px; border:none; border-radius:5px; margin-right:5px;">🗺️ Ver Rota</button></a>`;
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                // Link para abrir o GPS externo
+                let linkMap = "#";
+                if (d.origem && d.origem.lat) {
+                    linkMap = `https://www.google.com/maps/dir/?api=1&destination=${d.origem.lat},${d.origem.lng}&travelmode=driving`;
                 }
-
-                container.innerHTML += `
-                    <div class="card-corrida">
-                        <h3>📍 ${dados.destino}</h3>
-                        <p>Valor: <b style="color:#2ecc71">${dados.valor}</b></p>
-                        <div style="display:flex; margin-top:10px;">
-                            ${btnMapa}
-                            <button onclick="aceitarPedido('${doc.id}')" class="btn-aceitar" style="flex:1; background:#f1c40f; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">ACEITAR</button>
-                        </div>
-                    </div>
-                `;
+                
+                div.innerHTML += `
+                    <div class="card">
+                        <h3>📍 ${d.destino}</h3>
+                        <p>Valor: ${d.valor}</p>
+                        <a href="${linkMap}" target="_blank"><button class="btn btn-mapa">🗺️ ABRIR GPS</button></a>
+                        <button class="btn" onclick="aceitar('${doc.id}')">ACEITAR CORRIDA</button>
+                    </div>`;
             });
         });
 
-        // 2. VER CORRIDAS QUE EU JÁ ACEITEI (Para poder finalizar)
-        // Isso cria uma lista separada embaixo para você controlar quem está levando
-        db.collection("corridas").where("status", "==", "aceito")
-        .onSnapshot((snapshot) => {
-            // Se quiser, crie uma <div id="minhas-corridas"> no HTML para mostrar isso
-            snapshot.forEach((doc) => {
-                // Aqui você poderia mostrar um botão "FINALIZAR VIAGEM"
-                // Para simplificar agora, focamos apenas em aceitar.
-            });
-        });
+        // FUNÇÃO ACEITAR COM RASTREAMENTO
+        function aceitar(id) {
+            if(!confirm("Aceitar e iniciar compartilhamento de local?")) return;
 
-        // FUNÇÃO DE ACEITAR
-        function aceitarPedido(id) {
-            if(confirm("Pegar essa corrida?")) {
-                db.collection("corridas").doc(id).update({
-                    status: "aceito",
-                    motorista: "Seu Nome"
-                }).then(() => {
-                    alert("Corrida Aceita! O passageiro foi avisado.");
-                    // A corrida vai sumir da lista de 'pendentes' automaticamente
+            // 1. Muda status para aceito
+            db.collection("corridas").doc(id).update({ status: "aceito" });
+
+            alert("Corrida Aceita! Sua localização está sendo enviada ao passageiro.");
+
+            // 2. Liga o Rastreamento em Tempo Real
+            if (navigator.geolocation) {
+                watchID = navigator.geolocation.watchPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    console.log("Enviando posição:", lat, lng);
+
+                    // Atualiza a posição do motorista DENTRO do pedido
+                    db.collection("corridas").doc(id).update({
+                        motoristaLat: lat,
+                        motoristaLng: lng
+                    });
+
+                }, (erro) => {
+                    console.error("Erro GPS:", erro);
+                }, {
+                    enableHighAccuracy: true,
+                    maximumAge: 0
                 });
             }
         }
     </script>
-
 </body>
 </html>
