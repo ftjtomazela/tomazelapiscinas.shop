@@ -51,7 +51,6 @@
         <button id="btnLogin" class="btn btn-yellow" onclick="login()">ENTRAR</button>
         
         <p id="msgErro" style="color:#e74c3c; text-align:center; display:none; margin-top:15px; background: rgba(255,0,0,0.1); padding: 10px; border-radius: 5px; font-size: 0.9rem;"></p>
-        <p style="text-align:center; font-size:0.7rem; color:#666; margin-top:20px;">Versão GitHub Pages</p>
     </div>
 
     <div id="dashboard" class="hidden">
@@ -93,12 +92,26 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
 
     <script>
-        const auth = firebase.auth();
-        const db = firebase.firestore(); // Garante o db aqui também
+        // --- CONFIGURAÇÃO INTERNA (CORREÇÃO DO ERRO) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmtTBGw2ZxtKaUlbD5BlPgwQO26VFyyzU",
+            authDomain: "ubermotoconchas.firebaseapp.com",
+            projectId: "ubermotoconchas",
+            storageBucket: "ubermotoconchas.firebasestorage.app",
+            messagingSenderId: "697414710628",
+            appId: "1:697414710628:web:597892e4ba169fa4de7671",
+            measurementId: "G-3LF6T0KEVF"
+        };
         
+        // Inicializa Firebase Antes de Tudo
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        console.log("Firebase Iniciado com Sucesso!");
+
+        // --- VARIÁVEIS DO APP ---
         let isOnline = false;
         let watchID = null;
         let corridaAtual = null; 
@@ -115,7 +128,6 @@
                         document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
                         verificarCorridaAtiva(u.uid); 
                     } else {
-                        // Se não tiver usuário, mostra tela de login
                         document.getElementById('tela-auth').classList.remove('hidden');
                         document.getElementById('dashboard').classList.add('hidden');
                     }
@@ -144,19 +156,17 @@
                     let texto = "Erro: " + err.message;
                     if (err.code === 'auth/invalid-credential') texto = "Senha ou E-mail incorretos.";
                     if (err.code === 'auth/user-not-found') texto = "Motorista não cadastrado.";
-                    // Erro comum no GitHub Pages sem configurar domínio:
-                    if (err.code === 'auth/unauthorized-domain') texto = "ERRO DE DOMÍNIO: Adicione este site no Firebase > Auth > Configurações > Domínios Autorizados.";
                     
                     msg.innerText = texto;
                     msg.style.display = 'block';
-                    alert(texto); // Alerta nativo para garantir que você veja
+                    alert(texto); 
                 });
         }
 
         // --- SAIR ---
         function sair() {
             if(confirm("Deseja realmente sair da conta?")) {
-                if(isOnline) toggleStatus(); // Fica offline antes de sair
+                if(isOnline) toggleStatus(); 
                 auth.signOut().then(() => {
                     window.location.reload();
                 });
