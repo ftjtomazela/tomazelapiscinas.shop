@@ -4,127 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Motorista Pro - Conchas</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: #121212; color: #fff; height: 100vh; overflow: hidden; }
-
-        /* --- UTILITÁRIOS --- */
         .hidden { display: none !important; }
-        .btn { width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; }
+        .btn { width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; margin-bottom: 10px; }
         .btn-yellow { background: #f1c40f; color: #000; }
+        .btn-green { background: #2ecc71; color: #000; }
         .btn-blue { background: #3498db; color: white; }
         .btn-red { background: #e74c3c; color: white; }
-        .btn-outline { background: transparent; border: 2px solid #333; color: #888; }
-
-        /* --- LOGIN (Igual ao do Passageiro, mas Dark) --- */
-        #tela-auth {
-            display: flex; flex-direction: column; justify-content: center; padding: 30px; height: 100%;
-            background: radial-gradient(circle at top, #2c2c2c, #000);
-        }
-        .input-dark {
-            width: 100%; padding: 15px; background: #333; border: 1px solid #444;
-            color: white; border-radius: 10px; margin-bottom: 15px; outline: none;
-        }
-        .input-dark:focus { border-color: #f1c40f; }
-
-        /* --- DASHBOARD (Painel Principal) --- */
-        #dashboard { height: 100%; display: flex; flex-direction: column; }
         
-        /* Cabeçalho de Status */
-        .header-status {
-            padding: 20px; background: #1e1e1e; border-bottom: 1px solid #333;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .toggle-btn {
-            background: #333; color: #888; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem;
-            border: 1px solid #444; cursor: pointer; transition: 0.3s;
-        }
-        .toggle-btn.online { background: #2ecc71; color: #000; border-color: #2ecc71; font-weight: bold; }
-
-        /* Resumo de Ganhos */
-        .earnings-card {
-            margin: 20px; padding: 20px; background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%);
-            border-radius: 15px; color: #000; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.2);
-        }
+        #tela-auth, #dashboard, #tela-corrida { height: 100%; display: flex; flex-direction: column; }
+        #tela-auth { justify-content: center; padding: 30px; background: radial-gradient(circle at top, #2c2c2c, #000); }
+        .input-dark { width: 100%; padding: 15px; background: #333; border: 1px solid #444; color: white; border-radius: 10px; margin-bottom: 15px; }
         
-        /* Lista de Pedidos */
-        #lista-pedidos {
-            flex: 1; overflow-y: auto; padding: 20px;
-        }
-        .card-pedido {
-            background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px;
-            border-left: 5px solid #f1c40f; animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .badge { background: #333; padding: 4px 8px; border-radius: 5px; font-size: 0.8rem; color: #aaa; }
-        .price-tag { font-size: 1.5rem; color: #2ecc71; font-weight: 800; }
-
-        /* --- TELA DE CORRIDA ATIVA --- */
-        #tela-corrida {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 100; padding: 30px;
-            display: flex; flex-direction: column; justify-content: center; text-align: center;
-        }
-        .big-icon { font-size: 4rem; margin-bottom: 20px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
+        /* Dashboard */
+        .header-status { padding: 20px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; }
+        .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; }
+        .toggle-btn.online { background: #2ecc71; color: #000; }
+        .card-pedido { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #f1c40f; }
+        
+        /* Tela Corrida */
+        #tela-corrida { padding: 20px; background: #000; text-align: center; }
+        .status-badge { background: #333; color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; }
+        .info-box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <div id="tela-auth">
-        <h1 style="text-align:center; margin-bottom:10px; color:#f1c40f;">DRIVER PRO</h1>
-        <p style="text-align:center; color:#888; margin-bottom:30px;">Área exclusiva do Motorista</p>
-        
+        <h1 style="text-align:center; color:#f1c40f; margin-bottom:20px;">DRIVER PRO</h1>
         <input type="email" id="email" class="input-dark" placeholder="E-mail">
         <input type="password" id="senha" class="input-dark" placeholder="Senha">
-        
-        <button class="btn btn-yellow" onclick="login()">ENTRAR PARA TRABALHAR</button>
-        <p id="msgErro" style="color:#e74c3c; text-align:center; margin-top:15px; display:none;"></p>
+        <button class="btn btn-yellow" onclick="login()">ENTRAR</button>
+        <p id="msgErro" style="color:#e74c3c; text-align:center; display:none;"></p>
     </div>
 
     <div id="dashboard" class="hidden">
         <div class="header-status">
-            <div>
-                <strong id="motoristaNome">Motorista</strong>
-                <div style="font-size:0.8rem; color:#666;">Conchas - SP</div>
-            </div>
+            <div><strong id="motoristaNome">Motorista</strong><div style="font-size:0.8rem; color:#666;">Conchas - SP</div></div>
             <button id="btnStatus" class="toggle-btn" onclick="toggleStatus()">🔴 OFFLINE</button>
         </div>
-
-        <div class="earnings-card">
-            <small style="opacity:0.8">Ganhos Hoje (Simulado)</small>
-            <h1 id="ganhosDia">R$ 0,00</h1>
-        </div>
-
-        <h4 style="margin: 0 20px; color:#888;">Chamadas Disponíveis</h4>
-        <div id="lista-pedidos">
-            <p style="text-align:center; color:#444; margin-top:50px;">Nenhuma chamada no momento...</p>
+        <div style="padding:20px;">
+            <h3 style="color:#888; margin-bottom:10px;">Chamadas</h3>
+            <div id="lista-pedidos">
+                <p style="text-align:center; color:#444; margin-top:30px;">Fique Online para receber...</p>
+            </div>
         </div>
     </div>
 
     <div id="tela-corrida" class="hidden">
-        <div class="big-icon">🏍️💨</div>
-        <h2 style="color:#f1c40f;">Em Rota</h2>
-        <p style="color:#888; margin-bottom:30px;">Levando passageiro ao destino</p>
+        <div class="status-badge" id="statusCorridaTexto">BUSCANDO PASSAGEIRO</div>
         
-        <div style="background:#1e1e1e; padding:20px; border-radius:15px; margin-bottom:20px; text-align:left;">
-            <small style="color:#666">Destino:</small>
-            <h3 id="corridaDestino" style="color:#fff;">...</h3>
-            <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
-            <small style="color:#666">Valor a receber:</small>
-            <h2 style="color:#2ecc71;">R$ 7,00</h2>
+        <div class="info-box">
+            <small style="color:#888;">Destino Atual:</small>
+            <h2 id="destinoAtual" style="color:#fff; margin-top:5px;">Rua do Cliente, 123</h2>
         </div>
 
-        <a id="btnGpsExterno" href="#" target="_blank" style="text-decoration:none;">
-            <button class="btn btn-blue" style="margin-bottom:15px;">🗺️ ABRIR WAZE / MAPS</button>
+        <a id="btnGps" href="#" target="_blank" style="text-decoration:none;">
+            <button class="btn btn-blue">🗺️ ABRIR GPS</button>
         </a>
+
+        <button id="btnAcaoPrincipal" class="btn btn-yellow" onclick="avancarEtapa()">CHEGUEI NO LOCAL</button>
         
-        <button class="btn btn-yellow" onclick="finalizarCorrida()">🏁 FINALIZAR CORRIDA</button>
+        <div style="margin-top:auto; margin-bottom:20px;">
+            <small style="color:#666;">Passageiro:</small>
+            <h3 id="nomePassageiro">...</h3>
+            <h2 style="color:#2ecc71; margin-top:5px;">R$ 7,00</h2>
+        </div>
     </div>
 
     <audio id="som" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
@@ -136,171 +84,212 @@
 
     <script>
         const auth = firebase.auth();
+        // Nota: 'db' já vem do config
+        
         let isOnline = false;
         let watchID = null;
-        let corridaAtualId = null;
-        let ganhosHoje = 0;
+        let corridaAtual = null; 
+        let etapaAtual = 0; 
+        let wakeLock = null; // [NOVO] Variável para guardar o bloqueio de tela
 
-        // --- AUTHENTICATION ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
+        auth.onAuthStateChanged(u => {
+            if(u) {
                 document.getElementById('tela-auth').classList.add('hidden');
                 document.getElementById('dashboard').classList.remove('hidden');
-                document.getElementById('motoristaNome').innerText = user.email.split('@')[0]; // Pega nome do email
-                verificarCorridaAtiva();
+                document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
+                verificarCorridaAtiva(u.uid); 
             }
         });
 
         function login() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('senha').value;
-            auth.signInWithEmailAndPassword(email, pass)
-                .catch(err => {
-                    document.getElementById('msgErro').innerText = "Erro: " + err.message;
-                    document.getElementById('msgErro').style.display = 'block';
-                });
+            const e = document.getElementById('email').value;
+            const s = document.getElementById('senha').value;
+            auth.signInWithEmailAndPassword(e, s).catch(err => {
+                const msg = document.getElementById('msgErro');
+                msg.innerText = err.message;
+                msg.style.display = 'block';
+            });
         }
 
-        // --- SISTEMA ONLINE/OFFLINE ---
-        function toggleStatus() {
-            isOnline = !isOnline;
-            const btn = document.getElementById('btnStatus');
-            
-            if (isOnline) {
-                btn.innerText = "🟢 ONLINE";
-                btn.classList.add('online');
-                monitorarPedidos(); // Começa a ouvir
-                alert("Você está Online! Toque na tela para ativar o som.");
-                // Hack para ativar som no navegador
-                document.body.onclick = () => document.getElementById('som').play().catch(()=>{});
-            } else {
-                btn.innerText = "🔴 OFFLINE";
-                btn.classList.remove('online');
-                // Para de ouvir (em um app real, cancelaríamos o snapshot)
-                document.getElementById('lista-pedidos').innerHTML = '<p style="text-align:center; color:#444; margin-top:50px;">Você está offline.</p>';
+        // [NOVO] Função para manter a tela ligada
+        async function ativarWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log("Tela mantida ligada (WakeLock Ativo)!");
+                    
+                    // Se o bloqueio cair (ex: minimizou app), tenta reativar quando voltar
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock solto.');
+                    });
+                }
+            } catch (err) {
+                console.log("Erro ao ativar WakeLock:", err);
             }
         }
 
-        // --- LISTA DE PEDIDOS ---
-        function monitorarPedidos() {
-            db.collection("corridas")
-              .where("status", "==", "pendente")
-              .onSnapshot(snapshot => {
-                if(!isOnline) return;
+        // [NOVO] Reativa o WakeLock se a página ficar visível novamente
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) {
+                await ativarWakeLock();
+            }
+        });
 
+        function toggleStatus() {
+            isOnline = !isOnline;
+            const btn = document.getElementById('btnStatus');
+            if(isOnline) {
+                btn.innerText = "🟢 ONLINE"; btn.classList.add('online');
+                monitorarPedidos();
+                document.getElementById('som').play().catch(()=>{});
+                iniciarGPSGeral();
+                ativarWakeLock(); // [NOVO] Ativa o bloqueio de tela ao ficar online
+            } else {
+                btn.innerText = "🔴 OFFLINE"; btn.classList.remove('online');
+                document.getElementById('lista-pedidos').innerHTML = "";
+                if(watchID) navigator.geolocation.clearWatch(watchID);
+                
+                // [NOVO] Solta o bloqueio de tela ao ficar offline
+                if(wakeLock) {
+                    wakeLock.release().then(() => wakeLock = null);
+                }
+            }
+        }
+
+        function monitorarPedidos() {
+            db.collection("corridas").where("status", "==", "pendente").onSnapshot(snap => {
+                if(!isOnline) return;
                 const div = document.getElementById('lista-pedidos');
                 div.innerHTML = "";
-
-                if (snapshot.empty) {
-                    div.innerHTML = '<p style="text-align:center; color:#444; margin-top:50px;">Procurando chamadas...</p>';
-                    return;
-                }
-
-                // Toca som se tiver pedido novo
-                document.getElementById('som').play().catch(()=>{});
-
-                snapshot.forEach(doc => {
+                if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
+                
+                snap.forEach(doc => {
                     const d = doc.data();
-                    const navLink = `https://www.google.com/maps/dir/?api=1&destination=${d.origem.lat},${d.origem.lng}&travelmode=driving`;
-                    
-                    // Template do Cartão
-                    div.innerHTML += `
-                        <div class="card-pedido">
-                            <div class="info-row">
-                                <span class="badge">NOVA CHAMADA</span>
-                                <span style="color:#888;">Agora</span>
+                    if(d.status === 'pendente') { 
+                        document.getElementById('som').play().catch(()=>{});
+                        div.innerHTML += `
+                            <div class="card-pedido">
+                                <h3>${d.destino}</h3>
+                                <p style="color:#aaa; font-size:0.9rem;">Passageiro: ${d.passageiro || 'Cliente'}</p>
+                                <h2 style="color:#2ecc71; margin:10px 0;">${d.valor}</h2>
+                                <button class="btn btn-yellow" onclick="aceitarCorrida('${doc.id}')">ACEITAR CORRIDA</button>
                             </div>
-                            <h3 style="margin-bottom:5px;">${d.destino}</h3>
-                            <p style="color:#888; font-size:0.9rem; margin-bottom:15px;">
-                                Passageiro: ${d.passageiro || 'Cliente'}
-                            </p>
-                            
-                            <div class="info-row" style="align-items:center;">
-                                <div class="price-tag">${d.valor}</div>
-                                <div style="text-align:right;">
-                                    <a href="${navLink}" target="_blank" style="color:#3498db; text-decoration:none; margin-right:15px; font-weight:bold;">Ver Mapa</a>
-                                </div>
-                            </div>
-                            
-                            <button class="btn btn-yellow" onclick="aceitarCorrida('${doc.id}')">ACEITAR CORRIDA</button>
-                        </div>
-                    `;
+                        `;
+                    }
                 });
             });
         }
 
-        // --- ACEITAR CORRIDA ---
         function aceitarCorrida(id) {
-            if (!confirm("Aceitar esta corrida?")) return;
-
-            // 1. Atualiza Status
             db.collection("corridas").doc(id).update({
                 status: "aceito",
                 motoristaId: auth.currentUser.uid
             }).then(() => {
-                iniciarModoCorrida(id);
-            }).catch(err => alert("Erro ao aceitar: " + err.message));
+                carregarTelaCorrida(id);
+            });
         }
 
-        function iniciarModoCorrida(id) {
-            corridaAtualId = id;
-            
-            // Busca detalhes para preencher a tela
+        function carregarTelaCorrida(id) {
             db.collection("corridas").doc(id).get().then(doc => {
-                const d = doc.data();
-                document.getElementById('corridaDestino').innerText = d.destino;
-                // Link para navegar até o destino FINAL
-                // Nota: Primeiro você vai até a origem (busca o passageiro), depois o destino.
-                // Aqui coloquei o destino final para simplificar, mas o ideal é navegar até d.origem primeiro.
-                const linkDestino = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(d.destino)}&travelmode=driving`;
-                document.getElementById('btnGpsExterno').href = linkDestino;
+                corridaAtual = { id: doc.id, ...doc.data() };
+                document.getElementById('dashboard').classList.add('hidden');
+                document.getElementById('tela-corrida').classList.remove('hidden');
+                document.getElementById('nomePassageiro').innerText = corridaAtual.passageiro || "Cliente";
+                configurarEtapa(0);
+                monitorarGPSCorrida(id);
             });
+        }
 
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('tela-corrida').classList.remove('hidden');
+        function configurarEtapa(etapa) {
+            etapaAtual = etapa;
+            const btn = document.getElementById('btnAcaoPrincipal');
+            const statusTxt = document.getElementById('statusCorridaTexto');
+            const destinoTxt = document.getElementById('destinoAtual');
+            const btnGps = document.getElementById('btnGps');
 
-            // 2. Inicia GPS em tempo real
-            if (navigator.geolocation) {
+            if (etapa === 0) {
+                statusTxt.innerText = "BUSCANDO PASSAGEIRO";
+                destinoTxt.innerText = "Local do Passageiro"; 
+                btn.innerText = "📍 CHEGUEI NO LOCAL";
+                btn.className = "btn btn-yellow";
+                if(corridaAtual.origem) {
+                    const lat = corridaAtual.origem.lat;
+                    const lng = corridaAtual.origem.lng;
+                    btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+                }
+            } else if (etapa === 1) {
+                statusTxt.innerText = "AGUARDANDO PASSAGEIRO";
+                destinoTxt.innerText = "Aguarde o embarque...";
+                btn.innerText = "▶️ INICIAR VIAGEM";
+                btn.className = "btn btn-green";
+                db.collection("corridas").doc(corridaAtual.id).update({ status: "aguardando_passageiro" });
+            } else if (etapa === 2) {
+                statusTxt.innerText = "EM ROTA AO DESTINO";
+                destinoTxt.innerText = corridaAtual.destino;
+                btn.innerText = "🏁 FINALIZAR CORRIDA";
+                btn.className = "btn btn-red";
+                if(corridaAtual.destinoCoords) {
+                    const lat = corridaAtual.destinoCoords.lat;
+                    const lng = corridaAtual.destinoCoords.lng;
+                    btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+                }
+                db.collection("corridas").doc(corridaAtual.id).update({ status: "em_viagem" });
+            }
+        }
+
+        function avancarEtapa() {
+            if (etapaAtual === 0) {
+                if(confirm("Você chegou no local de embarque?")) configurarEtapa(1);
+            } else if (etapaAtual === 1) {
+                if(confirm("Passageiro embarcou? Iniciar rota?")) configurarEtapa(2);
+            } else if (etapaAtual === 2) {
+                if(confirm("Finalizar corrida e receber pagamento?")) finalizarCorrida();
+            }
+        }
+
+        function finalizarCorrida() {
+            db.collection("corridas").doc(corridaAtual.id).update({ status: "finalizado" });
+            alert("Corrida Finalizada! Valor adicionado.");
+            location.reload(); 
+        }
+
+        function iniciarGPSGeral() {
+            if(navigator.geolocation) {
+                watchID = navigator.geolocation.watchPosition(pos => { }, null, { enableHighAccuracy: true });
+            }
+        }
+
+        function monitorarGPSCorrida(idCorrida) {
+            if(navigator.geolocation) {
+                if(watchID) navigator.geolocation.clearWatch(watchID);
+                // ATUALIZADO: Agora enviamos a Velocidade (Speed)
                 watchID = navigator.geolocation.watchPosition(pos => {
-                    db.collection("corridas").doc(id).update({
+                    const velocidade = pos.coords.speed || 0; // Metros por segundo
+                    db.collection("corridas").doc(idCorrida).update({
                         motoristaLat: pos.coords.latitude,
-                        motoristaLng: pos.coords.longitude
+                        motoristaLng: pos.coords.longitude,
+                        motoristaSpeed: velocidade
                     });
                 }, null, { enableHighAccuracy: true });
             }
         }
 
-        // --- FINALIZAR ---
-        function finalizarCorrida() {
-            if(!confirm("Finalizar corrida e receber pagamento?")) return;
-
-            // Para o GPS
-            if(watchID) navigator.geolocation.clearWatch(watchID);
-
-            // Atualiza Banco
-            db.collection("corridas").doc(corridaAtualId).update({
-                status: "finalizado"
-            }).then(() => {
-                alert("Corrida finalizada! R$ 7,00 adicionados.");
-                
-                // Atualiza Ganhos (Local)
-                ganhosHoje += 7.00;
-                document.getElementById('ganhosDia').innerText = "R$ " + ganhosHoje.toFixed(2).replace('.', ',');
-
-                // Volta pro Dashboard
-                document.getElementById('tela-corrida').classList.add('hidden');
-                document.getElementById('dashboard').classList.remove('hidden');
-                corridaAtualId = null;
+        function verificarCorridaAtiva(uid) {
+            db.collection('corridas').where('motoristaId', '==', uid).get().then(snap => {
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(['aceito', 'aguardando_passageiro', 'em_viagem'].includes(d.status)) {
+                        corridaAtual = { id: doc.id, ...d };
+                        document.getElementById('dashboard').classList.add('hidden');
+                        document.getElementById('tela-corrida').classList.remove('hidden');
+                        monitorarGPSCorrida(corridaAtual.id);
+                        if(d.status === 'aceito') configurarEtapa(0);
+                        if(d.status === 'aguardando_passageiro') configurarEtapa(1);
+                        if(d.status === 'em_viagem') configurarEtapa(2);
+                    }
+                });
             });
         }
-
-        // Recupera estado se recarregar a página
-        function verificarCorridaAtiva() {
-            // Verifica se tem alguma corrida "aceita" por este motorista
-            // Num app real, faríamos uma query composta, aqui vamos simplificar:
-            // O motorista deve terminar o que começou antes de pegar outra.
-        }
-
     </script>
 </body>
 </html>
