@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Motorista Pro - Conchas</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { background-color: #121212; color: #fff; height: 100vh; overflow: hidden; }
@@ -23,13 +25,11 @@
         .input-dark { width: 100%; padding: 15px; background: #333; border: 1px solid #444; color: white; border-radius: 10px; margin-bottom: 15px; outline: none; font-size: 1rem; }
         .input-dark:focus { border-color: #f1c40f; }
         
-        /* Dashboard */
         .header-status { padding: 20px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; }
         .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; }
         .toggle-btn.online { background: #2ecc71; color: #000; }
         .card-pedido { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #f1c40f; }
         
-        /* Tela Corrida */
         #tela-corrida { padding: 20px; background: #000; text-align: center; }
         .status-badge { background: #333; color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; }
         .info-box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; }
@@ -44,7 +44,8 @@
         
         <button id="btnLogin" class="btn btn-yellow" onclick="login()">ENTRAR</button>
         
-        <p id="msgErro" style="color:#e74c3c; text-align:center; display:none; margin-top:15px; font-weight:bold; background: rgba(255,0,0,0.1); padding: 10px; border-radius: 5px;"></p>
+        <p id="msgErro" style="color:#e74c3c; text-align:center; display:none; margin-top:15px; background: rgba(255,0,0,0.1); padding: 10px; border-radius: 5px;"></p>
+        <p style="text-align:center; font-size:0.8rem; color:#666; margin-top:20px;">Abra no Chrome/Safari (Não use navegador do WhatsApp)</p>
     </div>
 
     <div id="dashboard" class="hidden">
@@ -62,18 +63,14 @@
 
     <div id="tela-corrida" class="hidden">
         <div class="status-badge" id="statusCorridaTexto">BUSCANDO PASSAGEIRO</div>
-        
         <div class="info-box">
             <small style="color:#888;">Destino Atual:</small>
-            <h2 id="destinoAtual" style="color:#fff; margin-top:5px;">Rua do Cliente, 123</h2>
+            <h2 id="destinoAtual" style="color:#fff; margin-top:5px;">...</h2>
         </div>
-
         <a id="btnGps" href="#" target="_blank" style="text-decoration:none;">
             <button class="btn btn-blue">🗺️ ABRIR GPS</button>
         </a>
-
         <button id="btnAcaoPrincipal" class="btn btn-yellow" onclick="avancarEtapa()">CHEGUEI NO LOCAL</button>
-        
         <div style="margin-top:auto; margin-bottom:20px;">
             <small style="color:#666;">Passageiro:</small>
             <h3 id="nomePassageiro">...</h3>
@@ -90,7 +87,7 @@
 
     <script>
         const auth = firebase.auth();
-        // db já vem do firebase-config.js
+        // db já vem do config
         
         let isOnline = false;
         let watchID = null;
@@ -98,75 +95,69 @@
         let etapaAtual = 0; 
         let wakeLock = null;
 
-        auth.onAuthStateChanged(u => {
-            if(u) {
-                document.getElementById('tela-auth').classList.add('hidden');
-                document.getElementById('dashboard').classList.remove('hidden');
-                document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
-                verificarCorridaAtiva(u.uid); 
-            }
-        });
+        // Configura persistência para manter logado no celular
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => {
+                // Monitora estado do login
+                auth.onAuthStateChanged(u => {
+                    if(u) {
+                        document.getElementById('tela-auth').classList.add('hidden');
+                        document.getElementById('dashboard').classList.remove('hidden');
+                        document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
+                        verificarCorridaAtiva(u.uid); 
+                    }
+                });
+            })
+            .catch(err => console.error("Erro persistencia:", err));
 
-        // --- LOGIN MELHORADO ---
+        // --- LOGIN COM DEBUG ---
         function login() {
-            const e = document.getElementById('email').value;
-            const s = document.getElementById('senha').value;
+            const e = document.getElementById('email').value.trim();
+            const s = document.getElementById('senha').value.trim();
             const btn = document.getElementById('btnLogin');
             const msg = document.getElementById('msgErro');
 
-            if (!e || !s) {
-                msg.innerText = "Preencha e-mail e senha.";
-                msg.style.display = 'block';
-                return;
-            }
+            if (!e || !s) { alert("Digite e-mail e senha!"); return; }
 
-            // 1. Feedback visual imediato
             btn.innerText = "Entrando...";
             btn.disabled = true;
             msg.style.display = 'none';
 
             auth.signInWithEmailAndPassword(e, s)
                 .then(() => {
-                    // Sucesso: onAuthStateChanged vai lidar com a troca de tela
+                    btn.innerText = "Sucesso!";
+                    // O onAuthStateChanged vai fazer a troca de tela
                 })
                 .catch(err => {
-                    // Erro: Devolve o botão e mostra mensagem
+                    // ERRO: Destrava o botão e mostra alerta
                     btn.innerText = "ENTRAR";
                     btn.disabled = false;
+                    
+                    let textoErro = "Erro desconhecido: " + err.message;
+                    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') textoErro = "Senha ou E-mail incorretos.";
+                    if (err.code === 'auth/user-not-found') textoErro = "Usuário não encontrado. Crie a conta no Painel.";
+                    if (err.code === 'auth/network-request-failed') textoErro = "Erro de conexão. Verifique sua internet.";
+                    
+                    msg.innerText = textoErro;
                     msg.style.display = 'block';
-
-                    // 2. Tradução dos erros comuns
-                    console.error(err); // Para ver no console se precisar
-                    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-                        msg.innerText = "E-mail ou senha incorretos.";
-                    } else if (err.code === 'auth/invalid-email') {
-                        msg.innerText = "Digite um e-mail válido.";
-                    } else if (err.code === 'auth/too-many-requests') {
-                        msg.innerText = "Muitas tentativas. Aguarde um pouco.";
-                    } else {
-                        msg.innerText = "Erro: " + err.message;
-                    }
+                    alert(textoErro); // Alerta para mobile
                 });
         }
 
-        // --- WAKE LOCK (TELA LIGADA) ---
+        // --- WAKE LOCK ---
         async function ativarWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
-                    console.log("WakeLock Ativo");
-                    wakeLock.addEventListener('release', () => console.log('Wake Lock solto.'));
+                    wakeLock.addEventListener('release', () => console.log('Tela solta'));
                 }
-            } catch (err) { console.log("Erro WakeLock:", err); }
+            } catch (err) {}
         }
-
         document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) {
-                await ativarWakeLock();
-            }
+            if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) await ativarWakeLock();
         });
 
-        // --- STATUS E GPS ---
+        // --- STATUS ---
         function toggleStatus() {
             isOnline = !isOnline;
             const btn = document.getElementById('btnStatus');
@@ -190,7 +181,6 @@
                 const div = document.getElementById('lista-pedidos');
                 div.innerHTML = "";
                 if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
-                
                 snap.forEach(doc => {
                     const d = doc.data();
                     if(d.status === 'pendente') { 
@@ -201,20 +191,15 @@
                                 <p style="color:#aaa; font-size:0.9rem;">Passageiro: ${d.passageiro || 'Cliente'}</p>
                                 <h2 style="color:#2ecc71; margin:10px 0;">${d.valor}</h2>
                                 <button class="btn btn-yellow" onclick="aceitarCorrida('${doc.id}')">ACEITAR CORRIDA</button>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 });
             });
         }
 
         function aceitarCorrida(id) {
-            db.collection("corridas").doc(id).update({
-                status: "aceito",
-                motoristaId: auth.currentUser.uid
-            }).then(() => {
-                carregarTelaCorrida(id);
-            });
+            db.collection("corridas").doc(id).update({ status: "aceito", motoristaId: auth.currentUser.uid })
+            .then(() => carregarTelaCorrida(id));
         }
 
         function carregarTelaCorrida(id) {
@@ -241,8 +226,7 @@
                 btn.innerText = "📍 CHEGUEI NO LOCAL";
                 btn.className = "btn btn-yellow";
                 if(corridaAtual.origem) {
-                    const lat = corridaAtual.origem.lat;
-                    const lng = corridaAtual.origem.lng;
+                    const lat = corridaAtual.origem.lat; const lng = corridaAtual.origem.lng;
                     btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
                 }
             } else if (etapa === 1) {
@@ -257,8 +241,7 @@
                 btn.innerText = "🏁 FINALIZAR CORRIDA";
                 btn.className = "btn btn-red";
                 if(corridaAtual.destinoCoords) {
-                    const lat = corridaAtual.destinoCoords.lat;
-                    const lng = corridaAtual.destinoCoords.lng;
+                    const lat = corridaAtual.destinoCoords.lat; const lng = corridaAtual.destinoCoords.lng;
                     btnGps.href = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
                 }
                 db.collection("corridas").doc(corridaAtual.id).update({ status: "em_viagem" });
@@ -266,36 +249,28 @@
         }
 
         function avancarEtapa() {
-            if (etapaAtual === 0) {
-                if(confirm("Você chegou no local de embarque?")) configurarEtapa(1);
-            } else if (etapaAtual === 1) {
-                if(confirm("Passageiro embarcou? Iniciar rota?")) configurarEtapa(2);
-            } else if (etapaAtual === 2) {
-                if(confirm("Finalizar corrida e receber pagamento?")) finalizarCorrida();
-            }
+            if (etapaAtual === 0) { if(confirm("Você chegou no local?")) configurarEtapa(1); }
+            else if (etapaAtual === 1) { if(confirm("Passageiro subiu? Iniciar?")) configurarEtapa(2); }
+            else if (etapaAtual === 2) { if(confirm("Finalizar corrida?")) finalizarCorrida(); }
         }
 
         function finalizarCorrida() {
             db.collection("corridas").doc(corridaAtual.id).update({ status: "finalizado" });
-            alert("Corrida Finalizada! Valor adicionado.");
+            alert("Finalizada! R$ 7,00");
             location.reload(); 
         }
 
         function iniciarGPSGeral() {
-            if(navigator.geolocation) {
-                watchID = navigator.geolocation.watchPosition(pos => { }, null, { enableHighAccuracy: true });
-            }
+            if(navigator.geolocation) watchID = navigator.geolocation.watchPosition(pos => { }, null, { enableHighAccuracy: true });
         }
 
         function monitorarGPSCorrida(idCorrida) {
             if(navigator.geolocation) {
                 if(watchID) navigator.geolocation.clearWatch(watchID);
                 watchID = navigator.geolocation.watchPosition(pos => {
-                    const velocidade = pos.coords.speed || 0;
+                    const vel = pos.coords.speed || 0;
                     db.collection("corridas").doc(idCorrida).update({
-                        motoristaLat: pos.coords.latitude,
-                        motoristaLng: pos.coords.longitude,
-                        motoristaSpeed: velocidade
+                        motoristaLat: pos.coords.latitude, motoristaLng: pos.coords.longitude, motoristaSpeed: vel
                     });
                 }, null, { enableHighAccuracy: true });
             }
