@@ -21,15 +21,21 @@
         .btn-red { background: #e74c3c; color: white; }
         
         #tela-auth, #dashboard, #tela-corrida { height: 100%; display: flex; flex-direction: column; }
+        
+        /* AUTH */
         #tela-auth { justify-content: center; padding: 30px; background: radial-gradient(circle at top, #2c2c2c, #000); }
         .input-dark { width: 100%; padding: 15px; background: #333; border: 1px solid #444; color: white; border-radius: 10px; margin-bottom: 15px; outline: none; font-size: 1rem; }
         .input-dark:focus { border-color: #f1c40f; }
         
-        .header-status { padding: 20px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; }
-        .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; }
+        /* DASHBOARD */
+        .header-status { padding: 15px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; font-size: 0.8rem; }
         .toggle-btn.online { background: #2ecc71; color: #000; }
+        .btn-sair { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; margin-top: 5px; cursor: pointer; }
+        
         .card-pedido { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #f1c40f; }
         
+        /* CORRIDA */
         #tela-corrida { padding: 20px; background: #000; text-align: center; }
         .status-badge { background: #333; color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; }
         .info-box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; }
@@ -44,15 +50,19 @@
         
         <button id="btnLogin" class="btn btn-yellow" onclick="login()">ENTRAR</button>
         
-        <p id="msgErro" style="color:#e74c3c; text-align:center; display:none; margin-top:15px; background: rgba(255,0,0,0.1); padding: 10px; border-radius: 5px;"></p>
-        <p style="text-align:center; font-size:0.8rem; color:#666; margin-top:20px;">Abra no Chrome/Safari (Não use navegador do WhatsApp)</p>
+        <p id="msgErro" style="color:#e74c3c; text-align:center; display:none; margin-top:15px; background: rgba(255,0,0,0.1); padding: 10px; border-radius: 5px; font-size: 0.9rem;"></p>
+        <p style="text-align:center; font-size:0.7rem; color:#666; margin-top:20px;">Versão GitHub Pages</p>
     </div>
 
     <div id="dashboard" class="hidden">
         <div class="header-status">
-            <div><strong id="motoristaNome">Motorista</strong><div style="font-size:0.8rem; color:#666;">Conchas - SP</div></div>
+            <div>
+                <strong id="motoristaNome" style="display:block;">Motorista</strong>
+                <button onclick="sair()" class="btn-sair">SAIR DA CONTA</button>
+            </div>
             <button id="btnStatus" class="toggle-btn" onclick="toggleStatus()">🔴 OFFLINE</button>
         </div>
+        
         <div style="padding:20px;">
             <h3 style="color:#888; margin-bottom:10px;">Chamadas</h3>
             <div id="lista-pedidos">
@@ -87,7 +97,7 @@
 
     <script>
         const auth = firebase.auth();
-        // db já vem do config
+        const db = firebase.firestore(); // Garante o db aqui também
         
         let isOnline = false;
         let watchID = null;
@@ -95,22 +105,25 @@
         let etapaAtual = 0; 
         let wakeLock = null;
 
-        // Configura persistência para manter logado no celular
+        // Persistência Local
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
-                // Monitora estado do login
                 auth.onAuthStateChanged(u => {
                     if(u) {
                         document.getElementById('tela-auth').classList.add('hidden');
                         document.getElementById('dashboard').classList.remove('hidden');
                         document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
                         verificarCorridaAtiva(u.uid); 
+                    } else {
+                        // Se não tiver usuário, mostra tela de login
+                        document.getElementById('tela-auth').classList.remove('hidden');
+                        document.getElementById('dashboard').classList.add('hidden');
                     }
                 });
             })
             .catch(err => console.error("Erro persistencia:", err));
 
-        // --- LOGIN COM DEBUG ---
+        // --- LOGIN ---
         function login() {
             const e = document.getElementById('email').value.trim();
             const s = document.getElementById('senha').value.trim();
@@ -124,24 +137,30 @@
             msg.style.display = 'none';
 
             auth.signInWithEmailAndPassword(e, s)
-                .then(() => {
-                    btn.innerText = "Sucesso!";
-                    // O onAuthStateChanged vai fazer a troca de tela
-                })
                 .catch(err => {
-                    // ERRO: Destrava o botão e mostra alerta
                     btn.innerText = "ENTRAR";
                     btn.disabled = false;
                     
-                    let textoErro = "Erro desconhecido: " + err.message;
-                    if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') textoErro = "Senha ou E-mail incorretos.";
-                    if (err.code === 'auth/user-not-found') textoErro = "Usuário não encontrado. Crie a conta no Painel.";
-                    if (err.code === 'auth/network-request-failed') textoErro = "Erro de conexão. Verifique sua internet.";
+                    let texto = "Erro: " + err.message;
+                    if (err.code === 'auth/invalid-credential') texto = "Senha ou E-mail incorretos.";
+                    if (err.code === 'auth/user-not-found') texto = "Motorista não cadastrado.";
+                    // Erro comum no GitHub Pages sem configurar domínio:
+                    if (err.code === 'auth/unauthorized-domain') texto = "ERRO DE DOMÍNIO: Adicione este site no Firebase > Auth > Configurações > Domínios Autorizados.";
                     
-                    msg.innerText = textoErro;
+                    msg.innerText = texto;
                     msg.style.display = 'block';
-                    alert(textoErro); // Alerta para mobile
+                    alert(texto); // Alerta nativo para garantir que você veja
                 });
+        }
+
+        // --- SAIR ---
+        function sair() {
+            if(confirm("Deseja realmente sair da conta?")) {
+                if(isOnline) toggleStatus(); // Fica offline antes de sair
+                auth.signOut().then(() => {
+                    window.location.reload();
+                });
+            }
         }
 
         // --- WAKE LOCK ---
