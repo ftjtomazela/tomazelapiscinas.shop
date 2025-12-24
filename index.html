@@ -225,7 +225,7 @@
             // Pede permissão para notificações
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
-                    messaging.getToken({ vapidKey: "BKy...SUA_CHAVE_VAPID_AQUI...xY" }).then((currentToken) => {
+                    messaging.getToken({ vapidKey: "8BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
                         if (currentToken) {
                             db.collection('users').doc(uid).update({ fcmToken: currentToken });
                         }
