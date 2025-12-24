@@ -15,7 +15,7 @@
         
         .hidden { display: none !important; }
         
-        /* BOTÕES GERAIS */
+        /* --- BOTÕES GERAIS --- */
         .btn { width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; margin-bottom: 10px; transition: 0.2s; }
         .btn:active { transform: scale(0.98); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -26,39 +26,39 @@
         .btn-red { background: #e74c3c; color: white; }
         .btn-outline { background: transparent; border: 1px solid #444; color: #888; font-size: 0.8rem; margin-top: 5px; }
         
-        /* ESTRUTURA */
+        /* --- ESTRUTURA --- */
         #tela-auth, #dashboard, #tela-corrida { height: 100%; display: flex; flex-direction: column; }
         
-        /* TELA LOGIN */
+        /* --- TELA LOGIN --- */
         #tela-auth { justify-content: center; padding: 30px; background: radial-gradient(circle at top, #2c2c2c, #000); }
         .input-dark { width: 100%; padding: 15px; background: #333; border: 1px solid #444; color: white; border-radius: 10px; margin-bottom: 15px; outline: none; font-size: 1rem; }
         .input-dark:focus { border-color: #f1c40f; }
         
-        /* DASHBOARD */
+        /* --- DASHBOARD --- */
         .header-status { padding: 15px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; font-size: 0.8rem; }
         .toggle-btn.online { background: #2ecc71; color: #000; }
         .btn-sair { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; margin-top: 5px; cursor: pointer; }
         
-        /* CARD DE GANHOS */
+        /* --- CARD DE GANHOS --- */
         .ganhos-card { background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%); margin: 15px; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center; }
         .ganhos-valor { font-size: 2.5rem; font-weight: 800; color: #2ecc71; margin: 5px 0; }
         .ganhos-label { color: #888; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* LISTA DE PEDIDOS */
+        /* --- LISTA DE PEDIDOS --- */
         .card-pedido { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #f1c40f; }
         
-        /* TELA DA CORRIDA */
+        /* --- TELA DA CORRIDA --- */
         #tela-corrida { padding: 20px; background: #000; text-align: center; }
         .status-badge { background: #333; color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; }
         .info-box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; }
 
-        /* MODAL HISTÓRICO */
+        /* --- MODAL HISTÓRICO --- */
         .modal-full { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 2000; padding: 20px; overflow-y: auto; display: none; }
         .hist-item { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #2ecc71; display: flex; justify-content: space-between; align-items: center; }
         .hist-data { font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px; }
 
-        /* ESTILOS DO CHAT */
+        /* --- ESTILOS DO CHAT --- */
         .chat-modal { 
             position: fixed; bottom: 0; left: 0; width: 100%; height: 70%; 
             background: #1e1e1e; z-index: 6000; 
@@ -143,6 +143,22 @@
         <div id="lista-historico" style="color:#fff;">Carregando...</div>
     </div>
 
+    <div id="avaliacao-modal" class="modal-full" style="display:none; justify-content:center; align-items:center; background:rgba(0,0,0,0.9); z-index: 7000;">
+        <div style="background:#1e1e1e; padding:30px; border-radius:15px; text-align:center; width:90%; color:white;">
+            <h3>Corrida Finalizada!</h3>
+            <p style="color:#aaa; margin-bottom:20px;">Avalie o passageiro</p>
+            <div style="font-size:40px; margin-bottom:20px; cursor:pointer;">
+                <span onclick="setEstrela(1)">⭐</span>
+                <span onclick="setEstrela(2)">⭐</span>
+                <span onclick="setEstrela(3)">⭐</span>
+                <span onclick="setEstrela(4)">⭐</span>
+                <span onclick="setEstrela(5)">⭐</span>
+            </div>
+            <p id="nota-selecionada" style="font-weight:bold; color:#f1c40f;">0 Estrelas</p>
+            <button class="btn btn-yellow" onclick="enviarAvaliacao()">ENVIAR AVALIAÇÃO</button>
+        </div>
+    </div>
+
     <div id="chat-modal" class="chat-modal">
         <div class="chat-header">
             <span>Conversa com Passageiro</span>
@@ -163,7 +179,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
 
     <script>
-        // CONFIGURAÇÃO
+        // --- CONFIGURAÇÃO ---
         const firebaseConfig = {
             apiKey: "AIzaSyDmtTBGw2ZxtKaUlbD5BlPgwQO26VFyyzU",
             authDomain: "ubermotoconchas.firebaseapp.com",
@@ -177,7 +193,6 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
-        // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
         try {
             messaging = firebase.messaging();
@@ -185,21 +200,22 @@
             console.log("Messaging não suportado neste navegador");
         }
 
-        // VARIÁVEIS GLOBAIS
+        // --- VARIÁVEIS GLOBAIS ---
         let isOnline = false;
         let watchID = null;
         let corridaAtual = null; 
         let etapaAtual = 0; 
         let wakeLock = null;
+        let notaAtual = 0; // Para avaliação
 
-        // TRAVA DE SAÍDA (SEGURANÇA)
+        // --- TRAVA DE SAÍDA ---
         window.onbeforeunload = function() {
             if (corridaAtual && corridaAtual.status !== 'finalizado') {
                 return "Você tem uma corrida em andamento. Não saia!";
             }
         };
 
-        // INICIALIZAÇÃO
+        // --- INICIALIZAÇÃO ---
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
                 auth.onAuthStateChanged(u => {
@@ -210,7 +226,7 @@
                         verificarCorridaAtiva(u.uid);
                         atualizarGanhosHoje(u.uid);
                         
-                        // CONFIGURA NOTIFICAÇÕES AO LOGAR
+                        // NOTIFICAÇÕES (CORRIGIDO)
                         configurarNotificacoes(u.uid);
                     } else {
                         document.getElementById('tela-auth').classList.remove('hidden');
@@ -220,12 +236,37 @@
             })
             .catch(err => console.error("Erro persistencia:", err));
 
-        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL (CORRIGIDO) ---
+        // --- SISTEMA DE AVALIAÇÃO (NOVO) ---
+        function abrirAvaliacao() {
+            document.getElementById('avaliacao-modal').style.display = 'flex';
+        }
+
+        function setEstrela(n) {
+            notaAtual = n;
+            document.getElementById('nota-selecionada').innerText = n + " Estrelas";
+        }
+
+        function enviarAvaliacao() {
+            if(notaAtual === 0) return alert("Selecione uma nota!");
+            
+            if(corridaAtual && corridaAtual.uid) { // uid é o ID do passageiro
+                db.collection('users').doc(corridaAtual.uid).collection('avaliacoes').add({
+                    nota: notaAtual,
+                    avaliador: auth.currentUser.uid,
+                    data: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    alert("Avaliação enviada!");
+                    location.reload();
+                });
+            } else {
+                location.reload();
+            }
+        }
+
+        // --- NOTIFICAÇÕES (COM SINTAXE CORRIGIDA) ---
         function configurarNotificacoes(uid) {
-            // Pede permissão para notificações
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
-                    // *** AQUI ESTAVA O ERRO DE SINTAXE, AGORA CORRIGIDO ***
                     messaging.getToken({ vapidKey: "BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
                         if (currentToken) {
                             db.collection('users').doc(uid).update({ fcmToken: currentToken });
@@ -279,7 +320,7 @@
             }
         }
 
-        // --- WAKE LOCK (TELA LIGADA) ---
+        // --- WAKE LOCK ---
         async function ativarWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
@@ -291,7 +332,7 @@
             if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) await ativarWakeLock();
         });
 
-        // --- STATUS ONLINE/OFFLINE ---
+        // --- STATUS E MONITORAMENTO ---
         function toggleStatus() {
             isOnline = !isOnline;
             const btn = document.getElementById('btnStatus');
@@ -331,15 +372,14 @@
                     }
                 });
 
-                // Toca som e notifica se tiver nova corrida
                 if (temNova) {
                     document.getElementById('som').play().catch(()=>{});
-                    dispararNotificacaoLocal("Nova Corrida", "Um cliente está chamando!");
+                    dispararNotificacaoLocal("Nova Corrida", "Um passageiro está solicitando uma moto.");
                 }
             });
         }
 
-        // --- GERENCIAMENTO DE CORRIDA ---
+        // --- CORRIDA ---
         function aceitarCorrida(id) {
             localStorage.setItem('corridaAtivaID', id);
             
@@ -360,8 +400,8 @@
                 else if(corridaAtual.status === 'em_viagem') configurarEtapa(2);
                 
                 monitorarGPSCorrida(id);
-                atualizarLinkGPS(); 
-                monitorarChat(id); 
+                atualizarLinkGPS();
+                monitorarChat(id);
             });
         }
 
@@ -389,6 +429,10 @@
                 btn.className = "btn btn-red";
                 db.collection("corridas").doc(corridaAtual.id).update({ status: "em_viagem" });
             }
+            atualizarLinkGPS();
+        }
+
+        function actualizarLinkGPS() { // Mantido nome para compatibilidade
             atualizarLinkGPS();
         }
 
@@ -429,7 +473,7 @@
                  .then(() => {
                      alert("Finalizada! R$ 7,00");
                      atualizarGanhosHoje(auth.currentUser.uid);
-                     location.reload(); 
+                     abrirAvaliacao(); // <--- ABRE AVALIAÇÃO AGORA
                  });
             } else {
                 location.reload();
