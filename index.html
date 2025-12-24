@@ -220,12 +220,13 @@
             })
             .catch(err => console.error("Erro persistencia:", err));
 
-        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL ---
+        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL (CORRIGIDO) ---
         function configurarNotificacoes(uid) {
             // Pede permissão para notificações
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
-                    messaging.getToken({ vapidKey: "8BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
+                    // *** AQUI ESTAVA O ERRO DE SINTAXE, AGORA CORRIGIDO ***
+                    messaging.getToken({ vapidKey: "BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
                         if (currentToken) {
                             db.collection('users').doc(uid).update({ fcmToken: currentToken });
                         }
@@ -330,10 +331,10 @@
                     }
                 });
 
-                // Toca som e Notificação se tiver pedido
-                if(temNova) {
+                // Toca som e notifica se tiver nova corrida
+                if (temNova) {
                     document.getElementById('som').play().catch(()=>{});
-                    dispararNotificacaoLocal("Nova Corrida!", "Um passageiro está solicitando moto.");
+                    dispararNotificacaoLocal("Nova Corrida", "Um cliente está chamando!");
                 }
             });
         }
@@ -463,11 +464,6 @@
                         const msg = doc.data();
                         const classe = msg.remetente === 'motorista' ? 'msg-me' : 'msg-other';
                         div.innerHTML += `<div class="msg ${classe}">${msg.texto}</div>`;
-                        
-                        // Notifica se chegou mensagem do passageiro
-                        if(msg.remetente === 'passageiro') {
-                            // Poderia adicionar notificação aqui também
-                        }
                     });
                     div.scrollTop = div.scrollHeight;
                 });
