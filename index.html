@@ -15,7 +15,7 @@
         
         .hidden { display: none !important; }
         
-        /* --- BOTÕES GERAIS --- */
+        /* BOTÕES GERAIS */
         .btn { width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; font-size: 1rem; margin-bottom: 10px; transition: 0.2s; }
         .btn:active { transform: scale(0.98); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -26,39 +26,39 @@
         .btn-red { background: #e74c3c; color: white; }
         .btn-outline { background: transparent; border: 1px solid #444; color: #888; font-size: 0.8rem; margin-top: 5px; }
         
-        /* --- ESTRUTURA --- */
+        /* ESTRUTURA */
         #tela-auth, #dashboard, #tela-corrida { height: 100%; display: flex; flex-direction: column; }
         
-        /* --- TELA LOGIN --- */
+        /* TELA LOGIN */
         #tela-auth { justify-content: center; padding: 30px; background: radial-gradient(circle at top, #2c2c2c, #000); }
         .input-dark { width: 100%; padding: 15px; background: #333; border: 1px solid #444; color: white; border-radius: 10px; margin-bottom: 15px; outline: none; font-size: 1rem; }
         .input-dark:focus { border-color: #f1c40f; }
         
-        /* --- DASHBOARD --- */
+        /* DASHBOARD */
         .header-status { padding: 15px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; font-size: 0.8rem; }
         .toggle-btn.online { background: #2ecc71; color: #000; }
         .btn-sair { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; margin-top: 5px; cursor: pointer; }
         
-        /* --- CARD DE GANHOS --- */
+        /* CARD DE GANHOS */
         .ganhos-card { background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%); margin: 15px; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center; }
         .ganhos-valor { font-size: 2.5rem; font-weight: 800; color: #2ecc71; margin: 5px 0; }
         .ganhos-label { color: #888; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* --- LISTA DE PEDIDOS --- */
+        /* LISTA DE PEDIDOS */
         .card-pedido { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #f1c40f; }
         
-        /* --- TELA DA CORRIDA --- */
+        /* TELA DA CORRIDA */
         #tela-corrida { padding: 20px; background: #000; text-align: center; }
         .status-badge { background: #333; color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; }
         .info-box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; }
 
-        /* --- MODAL HISTÓRICO --- */
+        /* MODAL HISTÓRICO */
         .modal-full { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 2000; padding: 20px; overflow-y: auto; display: none; }
         .hist-item { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #2ecc71; display: flex; justify-content: space-between; align-items: center; }
         .hist-data { font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px; }
 
-        /* --- ESTILOS DO CHAT --- */
+        /* ESTILOS DO CHAT */
         .chat-modal { 
             position: fixed; bottom: 0; left: 0; width: 100%; height: 70%; 
             background: #1e1e1e; z-index: 6000; 
@@ -93,8 +93,10 @@
         <div class="header-status">
             <div>
                 <strong id="motoristaNome" style="display:block;">Motorista</strong>
+                <p id="motoristaNota" style="font-size:0.8rem; color:#f1c40f;">5.0 ⭐</p>
                 <button onclick="sair()" class="btn-sair">SAIR DA CONTA</button>
             </div>
+            <button onclick="abrirMinhaConta()" class="btn-sair" style="border:1px solid #aaa; color:#aaa; margin-right:10px;">PERFIL</button>
             <button id="btnStatus" class="toggle-btn" onclick="toggleStatus()">🔴 OFFLINE</button>
         </div>
         
@@ -138,7 +140,7 @@
     <div id="modal-historico" class="modal-full">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 style="color:#fff;">Histórico</h2>
-            <button onclick="fecharModal()" style="background:none; border:none; color:#fff; font-size:1.5rem;">✕</button>
+            <button onclick="fecharModal('modal-historico')" style="background:none; border:none; color:#fff; font-size:1.5rem;">✕</button>
         </div>
         <div id="lista-historico" style="color:#fff;">Carregando...</div>
     </div>
@@ -157,6 +159,26 @@
             <p id="nota-selecionada" style="font-weight:bold; color:#f1c40f;">0 Estrelas</p>
             <button class="btn btn-yellow" onclick="enviarAvaliacao()">ENVIAR AVALIAÇÃO</button>
         </div>
+    </div>
+
+    <div id="modal-conta" class="modal-full">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="color:white;">Meu Perfil</h2>
+            <button onclick="fecharModal('modal-conta')" style="background:none; border:none; color:#fff; font-size:1.5rem;">✕</button>
+        </div>
+        
+        <div style="text-align:center; margin-bottom:20px;">
+            <h1 id="perfilNota" style="color:#f1c40f;">5.0 ⭐</h1>
+            <p style="color:#666;">Sua avaliação média</p>
+        </div>
+
+        <label style="color:#aaa;">Nome</label>
+        <input type="text" id="perfilNome" class="input-dark">
+        
+        <label style="color:#aaa;">Telefone</label>
+        <input type="text" id="perfilTel" class="input-dark">
+        
+        <button class="btn btn-yellow" onclick="salvarPerfil()">SALVAR ALTERAÇÕES</button>
     </div>
 
     <div id="chat-modal" class="chat-modal">
@@ -179,7 +201,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
 
     <script>
-        // --- CONFIGURAÇÃO ---
+        // CONFIGURAÇÃO
         const firebaseConfig = {
             apiKey: "AIzaSyDmtTBGw2ZxtKaUlbD5BlPgwQO26VFyyzU",
             authDomain: "ubermotoconchas.firebaseapp.com",
@@ -193,6 +215,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         
+        // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
         try {
             messaging = firebase.messaging();
@@ -200,7 +223,7 @@
             console.log("Messaging não suportado neste navegador");
         }
 
-        // --- VARIÁVEIS GLOBAIS ---
+        // VARIÁVEIS GLOBAIS
         let isOnline = false;
         let watchID = null;
         let corridaAtual = null; 
@@ -208,25 +231,26 @@
         let wakeLock = null;
         let notaAtual = 0; // Para avaliação
 
-        // --- TRAVA DE SAÍDA ---
+        // TRAVA DE SAÍDA (SEGURANÇA)
         window.onbeforeunload = function() {
             if (corridaAtual && corridaAtual.status !== 'finalizado') {
                 return "Você tem uma corrida em andamento. Não saia!";
             }
         };
 
-        // --- INICIALIZAÇÃO ---
+        // INICIALIZAÇÃO
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
-                auth.onAuthStateChanged(u => {
+                auth.onAuthStateChanged(async u => {
                     if(u) {
                         document.getElementById('tela-auth').classList.add('hidden');
                         document.getElementById('dashboard').classList.remove('hidden');
-                        document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
+                        
+                        await carregarPerfil(u.uid);
                         verificarCorridaAtiva(u.uid);
                         atualizarGanhosHoje(u.uid);
                         
-                        // NOTIFICAÇÕES (CORRIGIDO)
+                        // CONFIGURA NOTIFICAÇÕES AO LOGAR
                         configurarNotificacoes(u.uid);
                     } else {
                         document.getElementById('tela-auth').classList.remove('hidden');
@@ -235,6 +259,42 @@
                 });
             })
             .catch(err => console.error("Erro persistencia:", err));
+
+        // --- SISTEMA DE PERFIL ---
+        async function carregarPerfil(uid) {
+            const doc = await db.collection('users').doc(uid).get();
+            const dados = doc.exists ? doc.data() : {};
+            const nota = await calcularNotaMedia(uid);
+            
+            document.getElementById('motoristaNome').innerText = dados.nome || "Motorista";
+            document.getElementById('motoristaNota').innerText = nota + " ⭐";
+            document.getElementById('perfilNota').innerText = nota + " ⭐";
+            document.getElementById('perfilNome').value = dados.nome || "";
+            document.getElementById('perfilTel').value = dados.telefone || "";
+        }
+
+        async function calcularNotaMedia(uid) {
+            const snap = await db.collection('users').doc(uid).collection('avaliacoes').get();
+            if(snap.empty) return "Novo (N/A)";
+            let soma = 0;
+            snap.forEach(d => soma += d.data().nota);
+            return (soma / snap.size).toFixed(1);
+        }
+
+        function salvarPerfil() {
+            const nome = document.getElementById('perfilNome').value;
+            const tel = document.getElementById('perfilTel').value;
+            
+            if(!nome || !tel) return alert("Preencha nome e telefone.");
+            
+            db.collection('users').doc(auth.currentUser.uid).update({ nome: nome, telefone: tel })
+                .then(() => {
+                    alert("Perfil atualizado com sucesso!");
+                    document.getElementById('motoristaNome').innerText = nome;
+                    fecharModal('modal-conta');
+                })
+                .catch(e => alert("Erro ao salvar: " + e.message));
+        }
 
         // --- SISTEMA DE AVALIAÇÃO (NOVO) ---
         function abrirAvaliacao() {
@@ -263,7 +323,7 @@
             }
         }
 
-        // --- NOTIFICAÇÕES (COM SINTAXE CORRIGIDA) ---
+        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL (CORRIGIDO) ---
         function configurarNotificacoes(uid) {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
@@ -351,26 +411,35 @@
         }
 
         function monitorarPedidos() {
-            db.collection("corridas").where("status", "==", "pendente").onSnapshot(snap => {
+            db.collection("corridas").where("status", "==", "pendente").onSnapshot(async snap => {
                 if(!isOnline) return;
                 const div = document.getElementById('lista-pedidos');
                 div.innerHTML = "";
                 if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
                 
                 let temNova = false;
-                snap.forEach(doc => {
+                
+                // Processa cada pedido
+                for (const doc of snap.docs) {
                     const d = doc.data();
+                    
+                    // Pega a nota do passageiro
+                    let notaPassageiro = "Novo";
+                    if(d.uid) {
+                        notaPassageiro = await calcularNotaMedia(d.uid);
+                    }
+
                     if(d.status === 'pendente') { 
                         temNova = true;
                         div.innerHTML += `
                             <div class="card-pedido">
                                 <h3>${d.destino}</h3>
-                                <p style="color:#aaa; font-size:0.9rem;">Passageiro: ${d.passageiro || 'Cliente'}</p>
+                                <p style="color:#aaa; font-size:0.9rem;">Passageiro: ${d.passageiro || 'Cliente'} (${notaPassageiro} ⭐)</p>
                                 <h2 style="color:#2ecc71; margin:10px 0;">${d.valor}</h2>
                                 <button class="btn btn-yellow" onclick="aceitarCorrida('${doc.id}')">ACEITAR CORRIDA</button>
                             </div>`;
                     }
-                });
+                }
 
                 if (temNova) {
                     document.getElementById('som').play().catch(()=>{});
@@ -379,7 +448,7 @@
             });
         }
 
-        // --- CORRIDA ---
+        // --- GERENCIAMENTO DE CORRIDA ---
         function aceitarCorrida(id) {
             localStorage.setItem('corridaAtivaID', id);
             
@@ -388,12 +457,18 @@
         }
 
         function carregarTelaCorrida(id) {
-            db.collection("corridas").doc(id).get().then(doc => {
+            db.collection("corridas").doc(id).get().then(async doc => {
                 if (!doc.exists) return;
                 corridaAtual = { id: doc.id, ...doc.data() };
                 document.getElementById('dashboard').classList.add('hidden');
                 document.getElementById('tela-corrida').classList.remove('hidden');
-                document.getElementById('nomePassageiro').innerText = corridaAtual.passageiro || "Cliente";
+                
+                // Mostra nome e nota do passageiro na tela da corrida
+                let notaPass = "Novo";
+                if(corridaAtual.uid) {
+                    notaPass = await calcularNotaMedia(corridaAtual.uid);
+                }
+                document.getElementById('nomePassageiro').innerText = `${corridaAtual.passageiro || "Cliente"} (${notaPass} ⭐)`;
                 
                 if(corridaAtual.status === 'aceito') configurarEtapa(0);
                 else if(corridaAtual.status === 'aguardando_passageiro') configurarEtapa(1);
@@ -429,10 +504,6 @@
                 btn.className = "btn btn-red";
                 db.collection("corridas").doc(corridaAtual.id).update({ status: "em_viagem" });
             }
-            atualizarLinkGPS();
-        }
-
-        function actualizarLinkGPS() { // Mantido nome para compatibilidade
             atualizarLinkGPS();
         }
 
@@ -587,8 +658,12 @@
             });
         }
 
-        function fecharModal() {
-            document.getElementById('modal-historico').style.display = 'none';
+        function abrirMinhaConta() {
+            document.getElementById('modal-conta').style.display = 'block';
+        }
+
+        function fecharModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         function verificarCorridaAtiva(uid) {
