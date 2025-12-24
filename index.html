@@ -58,7 +58,7 @@
         .hist-item { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #2ecc71; display: flex; justify-content: space-between; align-items: center; }
         .hist-data { font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px; }
 
-        /* ESTILOS DO CHAT (NOVO) */
+        /* ESTILOS DO CHAT */
         .chat-modal { 
             position: fixed; bottom: 0; left: 0; width: 100%; height: 70%; 
             background: #1e1e1e; z-index: 6000; 
@@ -160,6 +160,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
 
     <script>
         // CONFIGURAÇÃO
@@ -175,6 +176,14 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        
+        // INICIALIZAÇÃO DO MESSAGING (PUSH)
+        let messaging;
+        try {
+            messaging = firebase.messaging();
+        } catch (e) {
+            console.log("Messaging não suportado neste navegador");
+        }
 
         // VARIÁVEIS GLOBAIS
         let isOnline = false;
@@ -200,6 +209,9 @@
                         document.getElementById('motoristaNome').innerText = u.email.split('@')[0];
                         verificarCorridaAtiva(u.uid);
                         atualizarGanhosHoje(u.uid);
+                        
+                        // CONFIGURA NOTIFICAÇÕES AO LOGAR
+                        configurarNotificacoes(u.uid);
                     } else {
                         document.getElementById('tela-auth').classList.remove('hidden');
                         document.getElementById('dashboard').classList.add('hidden');
@@ -207,6 +219,32 @@
                 });
             })
             .catch(err => console.error("Erro persistencia:", err));
+
+        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL ---
+        function configurarNotificacoes(uid) {
+            // Pede permissão para notificações
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted' && messaging) {
+                    messaging.getToken({ vapidKey: "BKy...SUA_CHAVE_VAPID_AQUI...xY" }).then((currentToken) => {
+                        if (currentToken) {
+                            db.collection('users').doc(uid).update({ fcmToken: currentToken });
+                        }
+                    }).catch((err) => {
+                        console.log('Erro ao pegar token FCM: ', err);
+                    });
+                }
+            });
+        }
+
+        function dispararNotificacaoLocal(titulo, corpo) {
+            if (Notification.permission === 'granted') {
+                new Notification(titulo, {
+                    body: corpo,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/1986/1986937.png',
+                    vibrate: [200, 100, 200]
+                });
+            }
+        }
 
         // --- SISTEMA DE LOGIN ---
         function login() {
@@ -277,10 +315,11 @@
                 div.innerHTML = "";
                 if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
                 
+                let temNova = false;
                 snap.forEach(doc => {
                     const d = doc.data();
                     if(d.status === 'pendente') { 
-                        document.getElementById('som').play().catch(()=>{});
+                        temNova = true;
                         div.innerHTML += `
                             <div class="card-pedido">
                                 <h3>${d.destino}</h3>
@@ -290,6 +329,12 @@
                             </div>`;
                     }
                 });
+
+                // Toca som e Notificação se tiver pedido
+                if(temNova) {
+                    document.getElementById('som').play().catch(()=>{});
+                    dispararNotificacaoLocal("Nova Corrida!", "Um passageiro está solicitando moto.");
+                }
             });
         }
 
@@ -314,8 +359,8 @@
                 else if(corridaAtual.status === 'em_viagem') configurarEtapa(2);
                 
                 monitorarGPSCorrida(id);
-                atualizarLinkGPS(); // [NOVO] Atualiza GPS
-                monitorarChat(id); // [NOVO] Inicia Chat
+                atualizarLinkGPS(); 
+                monitorarChat(id); 
             });
         }
 
@@ -390,7 +435,7 @@
             }
         }
 
-        // --- SISTEMA DE CHAT (NOVO) ---
+        // --- SISTEMA DE CHAT ---
         function toggleChat() {
             document.getElementById('chat-modal').classList.toggle('open');
         }
@@ -418,6 +463,11 @@
                         const msg = doc.data();
                         const classe = msg.remetente === 'motorista' ? 'msg-me' : 'msg-other';
                         div.innerHTML += `<div class="msg ${classe}">${msg.texto}</div>`;
+                        
+                        // Notifica se chegou mensagem do passageiro
+                        if(msg.remetente === 'passageiro') {
+                            // Poderia adicionar notificação aqui também
+                        }
                     });
                     div.scrollTop = div.scrollHeight;
                 });
