@@ -136,6 +136,22 @@
         </div>
     </div>
 
+    <div id="modal-conta" class="modal-full">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2>Perfil</h2>
+            <button onclick="fecharModal('modal-conta')" style="background:none; border:none; color:#fff; font-size:1.5rem;">✕</button>
+        </div>
+        <div style="text-align:center; margin-bottom:20px;">
+            <h1 id="perfilNota" style="color:#f1c40f;">5.0 ⭐</h1>
+            <p style="color:#aaa;">Sua avaliação média</p>
+        </div>
+        <label style="color:#888">Nome</label>
+        <input type="text" id="perfilNome" class="input-dark">
+        <label style="color:#888">Telefone</label>
+        <input type="text" id="perfilTel" class="input-dark">
+        <button class="btn btn-yellow" onclick="salvarPerfil()">SALVAR ALTERAÇÕES</button>
+    </div>
+
     <div id="modal-historico" class="modal-full">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 style="color:#fff;">Histórico</h2>
@@ -172,35 +188,21 @@
         </div>
     </div>
 
-    <div id="modal-conta" class="modal-full">
-        <div class="modal-header">
-            <button class="back-btn" onclick="fecharModal('modal-conta')">←</button>
-            <h2>Perfil</h2>
-        </div>
-        <div style="text-align:center; margin-bottom:20px;">
-            <h1 id="perfilNota" style="color:#f1c40f;">5.0 ⭐</h1>
-            <p style="color:#aaa;">Sua avaliação média</p>
-        </div>
-        <label style="color:#888">Nome</label>
-        <input type="text" id="perfilNome" class="input-dark">
-        <label style="color:#888">Telefone</label>
-        <input type="text" id="perfilTel" class="input-dark">
-        <button class="btn btn-yellow" onclick="salvarPerfil()">SALVAR ALTERAÇÕES</button>
-    </div>
-
     <audio id="som" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+    
     <script src="firebase-config.js"></script>
 
     <script>
+        // O firebase-config.js já inicializou o 'app' e criou a const 'db'.
+        // NÃO recriamos a const db aqui para evitar o erro.
         const auth = firebase.auth();
-        const db = firebase.firestore();
-        // Não inicializamos 'db' aqui de novo para evitar o erro
         
+        // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
         try {
             messaging = firebase.messaging();
@@ -208,6 +210,7 @@
             console.log("Messaging não suportado neste navegador");
         }
 
+        // VARIÁVEIS GLOBAIS
         let isOnline = false;
         let watchID = null;
         let corridaAtual = null; 
@@ -215,12 +218,14 @@
         let wakeLock = null;
         let notaAtual = 0;
 
+        // TRAVA DE SAÍDA (SEGURANÇA)
         window.onbeforeunload = function() {
             if (corridaAtual && corridaAtual.status !== 'finalizado') {
                 return "Você tem uma corrida em andamento. Não saia!";
             }
         };
 
+        // INICIALIZAÇÃO
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
                 auth.onAuthStateChanged(async u => {
@@ -230,6 +235,8 @@
                         await carregarPerfil(u.uid);
                         verificarCorridaAtiva(u.uid);
                         atualizarGanhosHoje(u.uid);
+                        
+                        // CONFIGURA NOTIFICAÇÕES AO LOGAR
                         configurarNotificacoes(u.uid);
                     } else {
                         document.getElementById('tela-auth').classList.remove('hidden');
@@ -239,7 +246,7 @@
             })
             .catch(err => console.error("Erro persistencia:", err));
 
-        // --- SISTEMA DE PERFIL E NOTAS ---
+        // --- SISTEMA DE PERFIL E NOTAS (NOVO) ---
         async function carregarPerfil(uid) {
             const doc = await db.collection('users').doc(uid).get();
             const dados = doc.exists ? doc.data() : {};
@@ -278,7 +285,7 @@
             }).catch(err => alert("Erro: " + err.message));
         }
 
-        // --- SISTEMA DE AVALIAÇÃO ---
+        // --- SISTEMA DE AVALIAÇÃO (NOVO) ---
         function abrirAvaliacao() {
             document.getElementById('avaliacao-modal').style.display = 'flex';
         }
@@ -305,10 +312,12 @@
             }
         }
 
-        // --- NOTIFICAÇÕES (CORRIGIDO) ---
+        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL (CORRIGIDO) ---
         function configurarNotificacoes(uid) {
+            // Pede permissão para notificações
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
+                    // *** AQUI A CORREÇÃO DE SINTAXE (FECHAR CHAVES E PARENTESES) ***
                     messaging.getToken({ vapidKey: "BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
                         if (currentToken) {
                             db.collection('users').doc(uid).update({ fcmToken: currentToken });
@@ -330,7 +339,7 @@
             }
         }
 
-        // --- LOGIN ---
+        // --- SISTEMA DE LOGIN ---
         function login() {
             const e = document.getElementById('email').value.trim();
             const s = document.getElementById('senha').value.trim();
@@ -362,7 +371,7 @@
             }
         }
 
-        // --- WAKE LOCK ---
+        // --- WAKE LOCK (TELA LIGADA) ---
         async function ativarWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
@@ -374,7 +383,7 @@
             if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) await ativarWakeLock();
         });
 
-        // --- STATUS ---
+        // --- STATUS ONLINE/OFFLINE ---
         function toggleStatus() {
             isOnline = !isOnline;
             const btn = document.getElementById('btnStatus');
@@ -397,8 +406,10 @@
                 if(!isOnline) return;
                 const div = document.getElementById('lista-pedidos');
                 div.innerHTML = "";
+                if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
                 
                 let temNova = false;
+                // Usamos for...of para poder usar await na média de nota
                 for (const doc of snap.docs) {
                     const d = doc.data();
                     let notaPass = "Novo";
@@ -418,14 +429,15 @@
                     }
                 }
 
-                if (temNova) {
+                // Toca som e Notificação se tiver pedido
+                if(temNova) {
                     document.getElementById('som').play().catch(()=>{});
-                    dispararNotificacaoLocal("Nova Corrida", "Um passageiro está solicitando uma moto.");
+                    dispararNotificacaoLocal("Nova Corrida!", "Um passageiro está solicitando moto.");
                 }
             });
         }
 
-        // --- CORRIDA ---
+        // --- GERENCIAMENTO DE CORRIDA ---
         function aceitarCorrida(id) {
             localStorage.setItem('corridaAtivaID', id);
             
@@ -452,8 +464,8 @@
                 else if(corridaAtual.status === 'em_viagem') configurarEtapa(2);
                 
                 monitorarGPSCorrida(id);
-                atualizarLinkGPS();
-                monitorarChat(id);
+                atualizarLinkGPS(); 
+                monitorarChat(id); 
             });
         }
 
@@ -528,7 +540,7 @@
             }
         }
 
-        // --- CHAT ---
+        // --- SISTEMA DE CHAT ---
         function toggleChat() {
             document.getElementById('chat-modal').classList.toggle('open');
         }
@@ -556,12 +568,17 @@
                         const msg = doc.data();
                         const classe = msg.remetente === 'motorista' ? 'msg-me' : 'msg-other';
                         div.innerHTML += `<div class="msg ${classe}">${msg.texto}</div>`;
+                        
+                        // Notifica se chegou mensagem do passageiro
+                        if(msg.remetente === 'passageiro') {
+                            // Poderia adicionar notificação aqui também
+                        }
                     });
                     div.scrollTop = div.scrollHeight;
                 });
         }
 
-        // --- GPS E DADOS ---
+        // --- GPS E HISTÓRICO ---
         function iniciarGPSGeral() {
             if(navigator.geolocation) watchID = navigator.geolocation.watchPosition(pos => { }, null, { enableHighAccuracy: true });
         }
