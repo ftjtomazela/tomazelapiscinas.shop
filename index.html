@@ -314,10 +314,8 @@
 
         // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL (CORRIGIDO) ---
         function configurarNotificacoes(uid) {
-            // Pede permissão para notificações
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
-                    // *** AQUI A CORREÇÃO DE SINTAXE (FECHAR CHAVES E PARENTESES) ***
                     messaging.getToken({ vapidKey: "BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
                         if (currentToken) {
                             db.collection('users').doc(uid).update({ fcmToken: currentToken });
@@ -366,8 +364,11 @@
 
         function sair() {
             if(confirm("Deseja realmente sair da conta?")) {
-                if(isOnline) toggleStatus(); 
-                auth.signOut().then(() => window.location.reload());
+                // SE O MOTORISTA ESTIVER ONLINE, COLOCA OFFLINE ANTES DE SAIR
+                db.collection('users').doc(auth.currentUser.uid).update({ isOnline: false }).then(() => {
+                    if(isOnline) toggleStatus(); // Atualiza visualmente se precisar
+                    auth.signOut().then(() => window.location.reload());
+                });
             }
         }
 
@@ -383,10 +384,16 @@
             if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) await ativarWakeLock();
         });
 
-        // --- STATUS ONLINE/OFFLINE ---
+        // --- STATUS ONLINE/OFFLINE (ATUALIZADO) ---
         function toggleStatus() {
             isOnline = !isOnline;
             const btn = document.getElementById('btnStatus');
+            
+            // ATUALIZA NO FIREBASE
+            if (auth.currentUser) {
+                db.collection('users').doc(auth.currentUser.uid).update({ isOnline: isOnline });
+            }
+
             if(isOnline) {
                 btn.innerText = "🟢 ONLINE"; btn.classList.add('online');
                 monitorarPedidos();
@@ -409,7 +416,6 @@
                 if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
                 
                 let temNova = false;
-                // Usamos for...of para poder usar await na média de nota
                 for (const doc of snap.docs) {
                     const d = doc.data();
                     let notaPass = "Novo";
@@ -429,10 +435,9 @@
                     }
                 }
 
-                // Toca som e Notificação se tiver pedido
-                if(temNova) {
+                if (temNova) {
                     document.getElementById('som').play().catch(()=>{});
-                    dispararNotificacaoLocal("Nova Corrida!", "Um passageiro está solicitando moto.");
+                    dispararNotificacaoLocal("Nova Corrida", "Um passageiro está solicitando uma moto.");
                 }
             });
         }
@@ -540,7 +545,7 @@
             }
         }
 
-        // --- SISTEMA DE CHAT ---
+        // --- CHAT ---
         function toggleChat() {
             document.getElementById('chat-modal').classList.toggle('open');
         }
@@ -568,11 +573,6 @@
                         const msg = doc.data();
                         const classe = msg.remetente === 'motorista' ? 'msg-me' : 'msg-other';
                         div.innerHTML += `<div class="msg ${classe}">${msg.texto}</div>`;
-                        
-                        // Notifica se chegou mensagem do passageiro
-                        if(msg.remetente === 'passageiro') {
-                            // Poderia adicionar notificação aqui também
-                        }
                     });
                     div.scrollTop = div.scrollHeight;
                 });
