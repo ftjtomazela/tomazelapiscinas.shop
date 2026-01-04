@@ -41,7 +41,6 @@
             justify-content: space-between; 
             align-items: center; 
             border-bottom: 1px solid #333; 
-            /* AQUI ESTÁ A CORREÇÃO DE ESPAÇAMENTO PARA CELULARES */
             padding: 20px;
             padding-top: max(20px, env(safe-area-inset-top) + 20px); 
         }
@@ -49,7 +48,7 @@
         .toggle-btn { 
             background: #333; 
             color: #888; 
-            padding: 12px 20px; /* Aumentei o botão */
+            padding: 12px 20px; 
             border-radius: 30px; 
             border: 2px solid #444; 
             font-size: 0.9rem; 
@@ -229,8 +228,9 @@
         // O firebase-config.js já inicializou o 'app' e criou a const 'db'.
         // NÃO recriamos a const db aqui para evitar o erro.
         const auth = firebase.auth();
-        const db = firebase.firestore();
-
+        
+        // CORREÇÃO: REMOVI A LINHA "const db = ..." QUE ESTAVA DUPLICADA
+        
         // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
         try {
