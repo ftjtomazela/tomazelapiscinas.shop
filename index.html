@@ -2,12 +2,12 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Motorista Pro - Conchas</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#1e1e1e">
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -34,11 +34,32 @@
         .input-dark { width: 100%; padding: 15px; background: #333; border: 1px solid #444; color: white; border-radius: 10px; margin-bottom: 15px; outline: none; font-size: 1rem; }
         .input-dark:focus { border-color: #f1c40f; }
         
-        /* DASHBOARD */
-        .header-status { padding: 15px; background: #1e1e1e; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        .toggle-btn { background: #333; color: #888; padding: 8px 15px; border-radius: 20px; border: 1px solid #444; font-size: 0.8rem; }
-        .toggle-btn.online { background: #2ecc71; color: #000; }
-        .btn-sair { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; margin-top: 5px; cursor: pointer; }
+        /* DASHBOARD - CABEÇALHO MELHORADO */
+        .header-status { 
+            background: #1e1e1e; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #333; 
+            /* AQUI ESTÁ A CORREÇÃO DE ESPAÇAMENTO PARA CELULARES */
+            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top) + 20px); 
+        }
+
+        .toggle-btn { 
+            background: #333; 
+            color: #888; 
+            padding: 12px 20px; /* Aumentei o botão */
+            border-radius: 30px; 
+            border: 2px solid #444; 
+            font-size: 0.9rem; 
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toggle-btn.online { background: #2ecc71; color: #000; border-color: #27ae60; }
+        .btn-sair { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 6px 12px; border-radius: 5px; font-size: 0.75rem; margin-top: 8px; cursor: pointer; }
         
         /* CARD DE GANHOS */
         .ganhos-card { background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%); margin: 15px; padding: 20px; border-radius: 15px; border: 1px solid #333; text-align: center; }
@@ -49,12 +70,12 @@
         .card-pedido { background: #1e1e1e; padding: 20px; border-radius: 15px; margin-bottom: 15px; border-left: 5px solid #f1c40f; }
         
         /* TELA DA CORRIDA */
-        #tela-corrida { padding: 20px; background: #000; text-align: center; }
+        #tela-corrida { padding: 20px; padding-top: max(20px, env(safe-area-inset-top) + 20px); background: #000; text-align: center; }
         .status-badge { background: #333; color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; display: inline-block; }
         .info-box { background: #1e1e1e; padding: 20px; border-radius: 15px; text-align: left; margin-bottom: 20px; }
 
         /* MODAL HISTÓRICO */
-        .modal-full { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 2000; padding: 20px; overflow-y: auto; display: none; }
+        .modal-full { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; z-index: 2000; padding: 20px; padding-top: max(20px, env(safe-area-inset-top) + 20px); overflow-y: auto; display: none; }
         .hist-item { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid #2ecc71; display: flex; justify-content: space-between; align-items: center; }
         .hist-data { font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px; }
 
@@ -92,11 +113,18 @@
     <div id="dashboard" class="hidden">
         <div class="header-status">
             <div>
-                <strong id="motoristaNome" onclick="abrirMinhaConta()">Motorista</strong>
-                <p id="motoristaNota" style="font-size:0.8rem; color:#f1c40f;">5.0 ⭐</p>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="background:#333; width:45px; height:45px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #f1c40f;">👤</div>
+                    <div onclick="abrirMinhaConta()">
+                        <strong id="motoristaNome" style="font-size:1.1rem; display:block;">Motorista</strong>
+                        <span id="motoristaNota" style="font-size:0.8rem; color:#f1c40f;">5.0 ⭐</span>
+                    </div>
+                </div>
                 <button onclick="sair()" class="btn-sair">SAIR DA CONTA</button>
             </div>
-            <button id="btnStatus" class="toggle-btn" onclick="toggleStatus()">🔴 OFFLINE</button>
+            <button id="btnStatus" class="toggle-btn" onclick="toggleStatus()">
+                <span>🔴</span> OFFLINE
+            </button>
         </div>
         
         <div class="ganhos-card">
@@ -136,22 +164,6 @@
         </div>
     </div>
 
-    <div id="modal-conta" class="modal-full">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2>Perfil</h2>
-            <button onclick="fecharModal('modal-conta')" style="background:none; border:none; color:#fff; font-size:1.5rem;">✕</button>
-        </div>
-        <div style="text-align:center; margin-bottom:20px;">
-            <h1 id="perfilNota" style="color:#f1c40f;">5.0 ⭐</h1>
-            <p style="color:#aaa;">Sua avaliação média</p>
-        </div>
-        <label style="color:#888">Nome</label>
-        <input type="text" id="perfilNome" class="input-dark">
-        <label style="color:#888">Telefone</label>
-        <input type="text" id="perfilTel" class="input-dark">
-        <button class="btn btn-yellow" onclick="salvarPerfil()">SALVAR ALTERAÇÕES</button>
-    </div>
-
     <div id="modal-historico" class="modal-full">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 style="color:#fff;">Histórico</h2>
@@ -188,6 +200,22 @@
         </div>
     </div>
 
+    <div id="modal-conta" class="modal-full">
+        <div class="modal-header">
+            <button class="back-btn" onclick="fecharModal('modal-conta')">←</button>
+            <h2>Perfil</h2>
+        </div>
+        <div style="text-align:center; margin-bottom:20px;">
+            <h1 id="perfilNota" style="color:#f1c40f;">5.0 ⭐</h1>
+            <p style="color:#aaa;">Sua avaliação média</p>
+        </div>
+        <label style="color:#888">Nome</label>
+        <input type="text" id="perfilNome" class="input-dark">
+        <label style="color:#888">Telefone</label>
+        <input type="text" id="perfilTel" class="input-dark">
+        <button class="btn btn-yellow" onclick="salvarPerfil()">SALVAR ALTERAÇÕES</button>
+    </div>
+
     <audio id="som" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -201,7 +229,8 @@
         // O firebase-config.js já inicializou o 'app' e criou a const 'db'.
         // NÃO recriamos a const db aqui para evitar o erro.
         const auth = firebase.auth();
-        
+        const db = firebase.firestore();
+
         // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
         try {
@@ -364,11 +393,8 @@
 
         function sair() {
             if(confirm("Deseja realmente sair da conta?")) {
-                // SE O MOTORISTA ESTIVER ONLINE, COLOCA OFFLINE ANTES DE SAIR
-                db.collection('users').doc(auth.currentUser.uid).update({ isOnline: false }).then(() => {
-                    if(isOnline) toggleStatus(); // Atualiza visualmente se precisar
-                    auth.signOut().then(() => window.location.reload());
-                });
+                if(isOnline) toggleStatus(); 
+                auth.signOut().then(() => window.location.reload());
             }
         }
 
@@ -395,13 +421,15 @@
             }
 
             if(isOnline) {
-                btn.innerText = "🟢 ONLINE"; btn.classList.add('online');
+                btn.innerHTML = '<span>🟢</span> ONLINE'; 
+                btn.classList.add('online');
                 monitorarPedidos();
                 document.getElementById('som').play().catch(()=>{});
                 iniciarGPSGeral();
                 ativarWakeLock();
             } else {
-                btn.innerText = "🔴 OFFLINE"; btn.classList.remove('online');
+                btn.innerHTML = '<span>🔴</span> OFFLINE'; 
+                btn.classList.remove('online');
                 document.getElementById('lista-pedidos').innerHTML = "";
                 if(watchID) navigator.geolocation.clearWatch(watchID);
                 if(wakeLock) wakeLock.release().then(() => wakeLock = null);
