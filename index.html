@@ -26,6 +26,15 @@
         .btn-red { background: #e74c3c; color: white; }
         .btn-outline { background: transparent; border: 1px solid #444; color: #888; font-size: 0.8rem; margin-top: 5px; }
         
+        /* BOTÃO DE INSTALAR (NOVO) */
+        .btn-install { 
+            background: linear-gradient(45deg, #2ecc71, #27ae60); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
         /* ESTRUTURA */
         #tela-auth, #dashboard, #tela-corrida { height: 100%; display: flex; flex-direction: column; }
         
@@ -103,6 +112,11 @@
 
     <div id="tela-auth">
         <h1 style="text-align:center; color:#f1c40f; margin-bottom:20px;">DRIVER PRO</h1>
+        
+        <button id="btnInstalarApp" class="btn btn-install hidden" onclick="instalarApp()">
+            📲 INSTALAR APLICATIVO
+        </button>
+
         <input type="email" id="email" class="input-dark" placeholder="E-mail">
         <input type="password" id="senha" class="input-dark" placeholder="Senha">
         <button id="btnLogin" class="btn btn-yellow" onclick="login()">ENTRAR</button>
@@ -246,6 +260,26 @@
         let etapaAtual = 0; 
         let wakeLock = null;
         let notaAtual = 0;
+        let deferredPrompt; // Variável para o App
+
+        // LÓGICA DE INSTALAÇÃO (PWA)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Impede o mini-infobar padrão
+            deferredPrompt = e; // Salva o evento
+            // Mostra o botão que criamos
+            document.getElementById('btnInstalarApp').classList.remove('hidden');
+        });
+
+        async function instalarApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt(); // Mostra o prompt nativo
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredPrompt = null;
+                    document.getElementById('btnInstalarApp').classList.add('hidden');
+                }
+            }
+        }
 
         // TRAVA DE SAÍDA (SEGURANÇA)
         window.onbeforeunload = function() {
@@ -393,8 +427,11 @@
 
         function sair() {
             if(confirm("Deseja realmente sair da conta?")) {
-                if(isOnline) toggleStatus(); 
-                auth.signOut().then(() => window.location.reload());
+                // SE O MOTORISTA ESTIVER ONLINE, COLOCA OFFLINE ANTES DE SAIR
+                db.collection('users').doc(auth.currentUser.uid).update({ isOnline: false }).then(() => {
+                    if(isOnline) toggleStatus(); // Atualiza visualmente se precisar
+                    auth.signOut().then(() => window.location.reload());
+                });
             }
         }
 
