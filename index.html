@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Motorista Pro - Conchas</title>
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Motorista Pro">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,7 +16,7 @@
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: #121212; color: #fff; height: 100vh; overflow: hidden; }
+        body { background-color: #121212; color: #fff; height: 100vh; height: 100dvh; overflow: hidden; }
         
         .hidden { display: none !important; }
         
@@ -27,7 +31,7 @@
         .btn-red { background: #e74c3c; color: white; }
         .btn-outline { background: transparent; border: 1px solid #444; color: #888; font-size: 0.8rem; margin-top: 5px; }
         
-        /* BOTÃO DE INSTALAR (NOVO) */
+        /* BOTÃO DE INSTALAR */
         .btn-install { 
             background: linear-gradient(45deg, #2ecc71, #27ae60); 
             color: white; 
@@ -107,9 +111,35 @@
         .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; word-wrap: break-word; }
         .msg-me { align-self: flex-end; background: #f1c40f; color: #000; border-radius: 15px 15px 0 15px; }
         .msg-other { align-self: flex-start; background: #333; color: #fff; border-radius: 15px 15px 15px 0; border: 1px solid #444; }
+
+        /* LOADER E LOGO (MODO ORIGINAL) */
+        #loader-inicial { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #121212; z-index: 4000; display: flex; 
+            justify-content: center; align-items: center; flex-direction: column; 
+        }
+        .logo-loading {
+            width: 150px; 
+            height: 150px; 
+            border-radius: 25px;
+            object-fit: contain; 
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 30px rgba(241, 196, 15, 0.1);
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+    <div id="loader-inicial">
+        <img src="Icon-515.png" alt="Motorista Pro" class="logo-loading">
+        <div style="border: 3px solid #333; border-top: 3px solid #f1c40f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s infinite; margin-top: 30px;"></div>
+    </div>
 
     <div id="tela-auth">
         <h1 style="text-align:center; color:#f1c40f; margin-bottom:20px;">DRIVER PRO</h1>
@@ -241,10 +271,7 @@
 
     <script>
         // O firebase-config.js já inicializou o 'app' e criou a const 'db'.
-        // NÃO recriamos a const db aqui para evitar o erro.
         const auth = firebase.auth();
-        
-        // CORREÇÃO: REMOVI A LINHA "const db = ..." QUE ESTAVA DUPLICADA
         
         // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
@@ -295,20 +322,35 @@
                 auth.onAuthStateChanged(async u => {
                     if(u) {
                         document.getElementById('tela-auth').classList.add('hidden');
+                        document.getElementById('loader-inicial').style.display = 'none'; // Some o loader
                         document.getElementById('dashboard').classList.remove('hidden');
                         await carregarPerfil(u.uid);
                         verificarCorridaAtiva(u.uid);
                         atualizarGanhosHoje(u.uid);
                         
-                        // CONFIGURA NOTIFICAÇÕES AO LOGAR
                         configurarNotificacoes(u.uid);
+                        iniciarRastreadorOnline(u.uid); // <--- MONITORA ONLINE
                     } else {
+                        document.getElementById('loader-inicial').style.display = 'none'; // Some o loader
                         document.getElementById('tela-auth').classList.remove('hidden');
                         document.getElementById('dashboard').classList.add('hidden');
                     }
                 });
             })
             .catch(err => console.error("Erro persistencia:", err));
+
+        // --- RASTREADOR DE PRESENÇA (MOTORISTA) ---
+        function iniciarRastreadorOnline(uid) {
+            const atualizar = () => {
+                db.collection('users').doc(uid).update({
+                    ultimo_visto: firebase.firestore.FieldValue.serverTimestamp(),
+                    tipo_usuario: 'motorista',
+                    online_agora: true
+                }).catch(()=>{});
+            };
+            atualizar();
+            setInterval(atualizar, 60000); 
+        }
 
         // --- SISTEMA DE PERFIL E NOTAS (NOVO) ---
         async function carregarPerfil(uid) {
