@@ -272,6 +272,7 @@
     <script>
         // O firebase-config.js já inicializou o 'app' e criou a const 'db'.
         const auth = firebase.auth();
+        const db = firebase.firestore(); // GARANTIA EXTRA DO DB
         
         // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
@@ -342,11 +343,11 @@
         // --- RASTREADOR DE PRESENÇA (MOTORISTA) ---
         function iniciarRastreadorOnline(uid) {
             const atualizar = () => {
-                db.collection('users').doc(uid).update({
+                db.collection('users').doc(uid).set({ // FIX: SET com Merge para garantir criação
                     ultimo_visto: firebase.firestore.FieldValue.serverTimestamp(),
                     tipo_usuario: 'motorista',
                     online_agora: true
-                }).catch(()=>{});
+                }, { merge: true }).catch(()=>{});
             };
             atualizar();
             setInterval(atualizar, 60000); 
@@ -381,10 +382,10 @@
             const tel = document.getElementById('perfilTel').value;
             if(!nome || !tel) return alert("Preencha todos os campos.");
             
-            db.collection('users').doc(auth.currentUser.uid).update({
+            db.collection('users').doc(auth.currentUser.uid).set({ // FIX: SET com Merge
                 nome: nome,
                 telefone: tel
-            }).then(() => {
+            }, { merge: true }).then(() => {
                 alert("Perfil atualizado!");
                 document.getElementById('motoristaNome').innerText = nome;
                 fecharModal('modal-conta');
@@ -424,7 +425,7 @@
                 if (permission === 'granted' && messaging) {
                     messaging.getToken({ vapidKey: "BN8AZa8hMQBabhaTW-9rNXjLX2-wpBjG-lNpsCl82fuWcjyUtVCvCBJFYUUVmSVD-L0a3OuJWY3fRtaTpo7qGE0" }).then((currentToken) => {
                         if (currentToken) {
-                            db.collection('users').doc(uid).update({ fcmToken: currentToken });
+                            db.collection('users').doc(uid).set({ fcmToken: currentToken }, { merge: true });
                         }
                     }).catch((err) => {
                         console.log('Erro ao pegar token FCM: ', err);
@@ -490,26 +491,43 @@
             if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) await ativarWakeLock();
         });
 
-        // --- STATUS ONLINE/OFFLINE (ATUALIZADO) ---
+        // --- STATUS ONLINE/OFFLINE (ATUALIZADO E FORÇADO) ---
         function toggleStatus() {
-            isOnline = !isOnline;
             const btn = document.getElementById('btnStatus');
+            isOnline = !isOnline; // Inverte o estado
             
-            // ATUALIZA NO FIREBASE
-            if (auth.currentUser) {
-                db.collection('users').doc(auth.currentUser.uid).update({ isOnline: isOnline });
-            }
-
+            // 1. Atualiza visualmente
             if(isOnline) {
                 btn.innerHTML = '<span>🟢</span> ONLINE'; 
                 btn.classList.add('online');
+            } else {
+                btn.innerHTML = '<span>🔴</span> OFFLINE'; 
+                btn.classList.remove('online');
+            }
+
+            // 2. Grava no Banco com certeza absoluta (USANDO SET + MERGE)
+            if (auth.currentUser) {
+                db.collection('users').doc(auth.currentUser.uid).set({ 
+                    isOnline: isOnline,
+                    ultimo_visto: firebase.firestore.FieldValue.serverTimestamp(),
+                    tipo_usuario: 'motorista'
+                }, { merge: true }).catch(err => {
+                    console.error("Erro ao salvar status:", err);
+                    alert("Erro ao ficar online. Verifique sua conexão.");
+                    // Reverte se der erro
+                    isOnline = !isOnline;
+                    if(isOnline) { btn.innerHTML = '<span>🟢</span> ONLINE'; btn.classList.add('online'); }
+                    else { btn.innerHTML = '<span>🔴</span> OFFLINE'; btn.classList.remove('online'); }
+                });
+            }
+
+            // 3. Funções extras
+            if(isOnline) {
                 monitorarPedidos();
                 document.getElementById('som').play().catch(()=>{});
                 iniciarGPSGeral();
                 ativarWakeLock();
             } else {
-                btn.innerHTML = '<span>🔴</span> OFFLINE'; 
-                btn.classList.remove('online');
                 document.getElementById('lista-pedidos').innerHTML = "";
                 if(watchID) navigator.geolocation.clearWatch(watchID);
                 if(wakeLock) wakeLock.release().then(() => wakeLock = null);
@@ -521,7 +539,7 @@
                 if(!isOnline) return;
                 const div = document.getElementById('lista-pedidos');
                 div.innerHTML = "";
-                if(snap.empty) div.innerHTML = "<p style='color:#666; text-align:center'>Procurando...</p>";
+                if(snap.empty) div.innerHTML = "<p style='text-align:center; color:#444; margin-top:30px;'>Procurando...</p>";
                 
                 let temNova = false;
                 for (const doc of snap.docs) {
