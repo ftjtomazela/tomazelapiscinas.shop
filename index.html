@@ -11,7 +11,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="theme-color" content="#1e1e1e">
     
     <style>
@@ -112,7 +112,7 @@
         .msg-me { align-self: flex-end; background: #f1c40f; color: #000; border-radius: 15px 15px 0 15px; }
         .msg-other { align-self: flex-start; background: #333; color: #fff; border-radius: 15px 15px 15px 0; border: 1px solid #444; }
 
-        /* LOADER E LOGO (MODO ORIGINAL) */
+        /* LOADER E LOGO */
         #loader-inicial { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #121212; z-index: 4000; display: flex; 
@@ -137,7 +137,7 @@
 <body>
 
     <div id="loader-inicial">
-        <img src="icon-515.png" alt="Motorista Pro" class="logo-loading">
+        <img src="Icon-515.png" alt="Motorista Pro" class="logo-loading">
         <div style="border: 3px solid #333; border-top: 3px solid #f1c40f; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s infinite; margin-top: 30px;"></div>
     </div>
 
@@ -217,7 +217,7 @@
     </div>
 
     <div id="avaliacao-modal" class="modal-full" style="display:none; justify-content:center; align-items:center; background:rgba(0,0,0,0.9); z-index: 7000;">
-        <div style="background:#1e1e1e; padding:30px; border-radius:15px; text-align:center; width:90%; color:white;">
+        <div style="background:#1e1e1e; padding:30px; border-radius:15px; text-align:center; width:90%;">
             <h3>Corrida Finalizada!</h3>
             <p style="color:#aaa; margin-bottom:20px;">Avalie o passageiro</p>
             <div style="font-size:40px; margin-bottom:20px; cursor:pointer;">
@@ -272,7 +272,6 @@
     <script>
         // O firebase-config.js já inicializou o 'app' e criou a const 'db'.
         const auth = firebase.auth();
-        const db = firebase.firestore(); // GARANTIA EXTRA DO DB
         
         // INICIALIZAÇÃO DO MESSAGING (PUSH)
         let messaging;
@@ -321,29 +320,33 @@
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
                 auth.onAuthStateChanged(async u => {
+                    // REMOVIDO LOADER ASSIM QUE AUTH RESPONDE
+                    document.getElementById('loader-inicial').style.display = 'none';
+
                     if(u) {
                         document.getElementById('tela-auth').classList.add('hidden');
-                        document.getElementById('loader-inicial').style.display = 'none'; // Some o loader
                         document.getElementById('dashboard').classList.remove('hidden');
                         await carregarPerfil(u.uid);
                         verificarCorridaAtiva(u.uid);
                         atualizarGanhosHoje(u.uid);
                         
                         configurarNotificacoes(u.uid);
-                        iniciarRastreadorOnline(u.uid); // <--- MONITORA ONLINE
+                        iniciarRastreadorOnline(u.uid); 
                     } else {
-                        document.getElementById('loader-inicial').style.display = 'none'; // Some o loader
                         document.getElementById('tela-auth').classList.remove('hidden');
                         document.getElementById('dashboard').classList.add('hidden');
                     }
                 });
             })
-            .catch(err => console.error("Erro persistencia:", err));
+            .catch(err => {
+                console.error("Erro persistencia:", err);
+                document.getElementById('loader-inicial').style.display = 'none';
+            });
 
         // --- RASTREADOR DE PRESENÇA (MOTORISTA) ---
         function iniciarRastreadorOnline(uid) {
             const atualizar = () => {
-                db.collection('users').doc(uid).set({ // FIX: SET com Merge para garantir criação
+                db.collection('users').doc(uid).set({ 
                     ultimo_visto: firebase.firestore.FieldValue.serverTimestamp(),
                     tipo_usuario: 'motorista',
                     online_agora: true
@@ -353,7 +356,7 @@
             setInterval(atualizar, 60000); 
         }
 
-        // --- SISTEMA DE PERFIL E NOTAS (NOVO) ---
+        // --- SISTEMA DE PERFIL E NOTAS ---
         async function carregarPerfil(uid) {
             const doc = await db.collection('users').doc(uid).get();
             const dados = doc.exists ? doc.data() : {};
@@ -382,7 +385,7 @@
             const tel = document.getElementById('perfilTel').value;
             if(!nome || !tel) return alert("Preencha todos os campos.");
             
-            db.collection('users').doc(auth.currentUser.uid).set({ // FIX: SET com Merge
+            db.collection('users').doc(auth.currentUser.uid).set({
                 nome: nome,
                 telefone: tel
             }, { merge: true }).then(() => {
@@ -392,7 +395,7 @@
             }).catch(err => alert("Erro: " + err.message));
         }
 
-        // --- SISTEMA DE AVALIAÇÃO (NOVO) ---
+        // --- SISTEMA DE AVALIAÇÃO ---
         function abrirAvaliacao() {
             document.getElementById('avaliacao-modal').style.display = 'flex';
         }
@@ -405,7 +408,7 @@
         function enviarAvaliacao() {
             if(notaAtual === 0) return alert("Selecione uma nota!");
             
-            if(corridaAtual && corridaAtual.uid) { // uid é o ID do passageiro
+            if(corridaAtual && corridaAtual.uid) { 
                 db.collection('users').doc(corridaAtual.uid).collection('avaliacoes').add({
                     nota: notaAtual,
                     avaliador: auth.currentUser.uid,
@@ -419,7 +422,7 @@
             }
         }
 
-        // --- SISTEMA DE NOTIFICAÇÕES PUSH E LOCAL (CORRIGIDO) ---
+        // --- SISTEMA DE NOTIFICAÇÕES ---
         function configurarNotificacoes(uid) {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted' && messaging) {
@@ -471,15 +474,14 @@
 
         function sair() {
             if(confirm("Deseja realmente sair da conta?")) {
-                // SE O MOTORISTA ESTIVER ONLINE, COLOCA OFFLINE ANTES DE SAIR
                 db.collection('users').doc(auth.currentUser.uid).update({ isOnline: false }).then(() => {
-                    if(isOnline) toggleStatus(); // Atualiza visualmente se precisar
+                    if(isOnline) toggleStatus(); 
                     auth.signOut().then(() => window.location.reload());
                 });
             }
         }
 
-        // --- WAKE LOCK (TELA LIGADA) ---
+        // --- WAKE LOCK ---
         async function ativarWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
@@ -491,12 +493,11 @@
             if (wakeLock !== null && document.visibilityState === 'visible' && isOnline) await ativarWakeLock();
         });
 
-        // --- STATUS ONLINE/OFFLINE (ATUALIZADO E FORÇADO) ---
+        // --- STATUS ONLINE/OFFLINE (CORRIGIDO) ---
         function toggleStatus() {
             const btn = document.getElementById('btnStatus');
-            isOnline = !isOnline; // Inverte o estado
+            isOnline = !isOnline; 
             
-            // 1. Atualiza visualmente
             if(isOnline) {
                 btn.innerHTML = '<span>🟢</span> ONLINE'; 
                 btn.classList.add('online');
@@ -505,23 +506,19 @@
                 btn.classList.remove('online');
             }
 
-            // 2. Grava no Banco com certeza absoluta (USANDO SET + MERGE)
+            // GRAVA NO BANCO (CRUCIAL PARA O PASSAGEIRO TE VER)
             if (auth.currentUser) {
                 db.collection('users').doc(auth.currentUser.uid).set({ 
                     isOnline: isOnline,
                     ultimo_visto: firebase.firestore.FieldValue.serverTimestamp(),
                     tipo_usuario: 'motorista'
                 }, { merge: true }).catch(err => {
-                    console.error("Erro ao salvar status:", err);
-                    alert("Erro ao ficar online. Verifique sua conexão.");
-                    // Reverte se der erro
-                    isOnline = !isOnline;
-                    if(isOnline) { btn.innerHTML = '<span>🟢</span> ONLINE'; btn.classList.add('online'); }
-                    else { btn.innerHTML = '<span>🔴</span> OFFLINE'; btn.classList.remove('online'); }
+                    console.error("Erro status:", err);
+                    isOnline = !isOnline; // Reverte se falhar
+                    alert("Erro de conexão!");
                 });
             }
 
-            // 3. Funções extras
             if(isOnline) {
                 monitorarPedidos();
                 document.getElementById('som').play().catch(()=>{});
@@ -583,7 +580,6 @@
                 document.getElementById('dashboard').classList.add('hidden');
                 document.getElementById('tela-corrida').classList.remove('hidden');
                 
-                // Mostra nota do passageiro na tela da corrida
                 let notaPass = "Novo";
                 if(corridaAtual.uid) {
                     notaPass = await calcularNotaMedia(corridaAtual.uid);
@@ -664,7 +660,7 @@
                  .then(() => {
                      alert("Finalizada! R$ 7,00");
                      atualizarGanhosHoje(auth.currentUser.uid);
-                     abrirAvaliacao(); // <--- ABRE AVALIAÇÃO
+                     abrirAvaliacao(); 
                  });
             } else {
                 location.reload();
